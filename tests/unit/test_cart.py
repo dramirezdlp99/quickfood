@@ -1,6 +1,7 @@
 """Pruebas iniciales del carrito (casos 1 a 5 de la propuesta)."""
 
 import re
+from pathlib import Path
 
 import pytest
 
@@ -149,6 +150,17 @@ def test_eliminar_producto_inexistente_avisa_y_conserva_carrito(client, producto
     assert "No se pudo eliminar el producto seleccionado." in response.get_data(as_text=True)
     with client.session_transaction() as session:
         assert session["cart"] == {str(producto.id): 2}
+
+
+def test_campo_cantidad_no_se_envia_solo_al_cambiar(client, producto):
+    """WCAG 3.2.2: cambiar el valor no debe recargar la página sin que el usuario lo pida."""
+    script = (Path(__file__).parents[2] / "app" / "static" / "js" / "cart.js").read_text(encoding="utf-8")
+    with client.session_transaction() as session:
+        session["cart"] = {str(producto.id): 2}
+    html = client.get("/carrito").get_data(as_text=True)
+
+    assert "requestSubmit" not in script
+    assert "js-quantity-input" not in html
 
 
 @pytest.mark.parametrize("url", ["/carrito/agregar", "/carrito/actualizar", "/carrito/eliminar"])
