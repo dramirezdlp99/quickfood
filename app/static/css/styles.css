@@ -1,0 +1,30 @@
+:root {
+  --qf-primary: #e8590c;
+  --qf-primary-dark: #c2410c;
+  --qf-dark: #1f2937;
+  --qf-bg: #fff8f3;
+}
+
+body { background: var(--qf-bg); color: var(--qf-dark); }
+
+.qf-navbar { background: var(--qf-dark); }
+.qf-navbar .navbar-brand, .qf-navbar .nav-link, .qf-navbar .navbar-text { color: #fff; }
+.qf-navbar .nav-link:hover { color: #fdba74; }
+.qf-navbar .navbar-toggler { border-color: rgba(255, 255, 255, .4); }
+.qf-navbar .navbar-toggler-icon { filter: invert(1); }
+.qf-accent { color: var(--qf-primary); }
+
+.qf-hero {
+  background: linear-gradient(135deg, var(--qf-primary), #f59f00);
+  color: #fff;
+}
+
+.qf-btn, .btn-primary.qf-btn { background: var(--qf-primary); border-color: var(--qf-primary); }
+.qf-btn:hover { background: var(--qf-primary-dark); border-color: var(--qf-primary-dark); }
+
+.qf-footer { background: var(--qf-dark); color: #cbd5e1; }
+
+.qf-status { text-transform: capitalize; }
+.qf-status-pendiente { background: #fde68a; color: #78350f; }
+.qf-status-preparando { background: #bfdbfe; color: #1e3a8a; }
+.qf-status-entregado { background: #bbf7d0; color: #14532d; }

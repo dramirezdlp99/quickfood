@@ -1,0 +1,10 @@
+"""Página de inicio (Mora puede reemplazar la plantilla con el diseño final)."""
+
+from flask import Blueprint, render_template
+
+bp = Blueprint("home", __name__)
+
+
+@bp.get("/")
+def index():
+    return render_template("home/index.html")

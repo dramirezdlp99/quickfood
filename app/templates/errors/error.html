@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Error {{ code }} · QuickFood{% endblock %}
+{% block content %}
+<div class="text-center py-5">
+  <p class="display-1 fw-bold qf-accent mb-0">{{ code }}</p>
+  <p class="lead">{{ message }}</p>
+  <a class="btn btn-primary qf-btn" href="{{ url_for('home.index') }}">Volver al inicio</a>
+</div>
+{% endblock %}

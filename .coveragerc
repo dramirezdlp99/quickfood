@@ -1,0 +1,11 @@
+[run]
+source = app
+branch = True
+relative_files = True
+omit =
+    app/cli.py
+
+[report]
+fail_under = 70
+show_missing = True
+skip_covered = False

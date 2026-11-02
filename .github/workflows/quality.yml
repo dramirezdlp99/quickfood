@@ -1,0 +1,169 @@
+# Pipeline de calidad de QuickFood.
+# Se ejecuta en cada push a main/develop y en cada Pull Request hacia ellas.
+# Si "pruebas" o "seguridad" fallan, las reglas de la rama impiden integrar.
+
+name: Calidad QuickFood
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: calidad-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  pruebas:
+    name: pruebas
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v6
+
+      - name: Instalar Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install -r requirements-dev.txt
+
+      - name: Ejecutar Pytest con cobertura
+        run: python -m pytest --junitxml=pytest-report.xml
+
+      - name: Resumen de cobertura
+        if: always()
+        run: |
+          echo "## Cobertura de pruebas" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          python -m coverage report >> "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Guardar reportes de pruebas
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: reporte-pruebas
+          path: |
+            coverage.xml
+            htmlcov/
+            pytest-report.xml
+          if-no-files-found: ignore
+
+  seguridad:
+    name: seguridad
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v6
+
+      - name: Instalar Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install -r requirements-dev.txt
+
+      - name: Bandit (patrones inseguros en Python)
+        run: bandit -c bandit.yaml -r app
+
+      - name: pip-audit (dependencias con vulnerabilidades conocidas)
+        if: always()
+        run: pip-audit -r requirements.txt --desc
+
+      - name: Generar reportes de seguridad
+        if: always()
+        run: |
+          bandit -c bandit.yaml -r app -f html -o bandit-report.html --exit-zero
+          pip-audit -r requirements.txt -f markdown -o pip-audit-report.md || true
+          echo "## pip-audit" >> "$GITHUB_STEP_SUMMARY"
+          cat pip-audit-report.md >> "$GITHUB_STEP_SUMMARY" || echo "Sin reporte" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Guardar reportes de seguridad
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: reporte-seguridad
+          path: |
+            bandit-report.html
+            pip-audit-report.md
+          if-no-files-found: ignore
+
+  sonarcloud:
+    name: sonarcloud
+    needs: pruebas
+    runs-on: ubuntu-latest
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    steps:
+      - name: Verificar si SonarQube Cloud está configurado
+        id: check
+        run: |
+          if [ -z "$SONAR_TOKEN" ]; then
+            echo "::warning::Falta el secreto SONAR_TOKEN; se omite el análisis de SonarQube Cloud."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Descargar el código (historial completo)
+        if: steps.check.outputs.skip != 'true'
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Traer el reporte de cobertura
+        if: steps.check.outputs.skip != 'true'
+        uses: actions/download-artifact@v6
+        with:
+          name: reporte-pruebas
+
+      - name: Análisis SonarQube Cloud
+        if: steps.check.outputs.skip != 'true'
+        uses: SonarSource/sonarqube-scan-action@v8
+
+  zap:
+    name: zap
+    needs: pruebas
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v6
+
+      - name: Instalar Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Levantar QuickFood temporal con datos ficticios
+        run: |
+          flask --app run init-db
+          flask --app run seed-demo
+          nohup flask --app run run --host 127.0.0.1 --port 5000 > flask.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:5000/ > /dev/null && break; sleep 1; done
+          curl -sf http://127.0.0.1:5000/ > /dev/null
+
+      - name: OWASP ZAP Baseline (análisis pasivo)
+        uses: zaproxy/action-baseline@v0.15.0
+        with:
+          target: "http://127.0.0.1:5000"
+          allow_issue_writing: false
+          fail_action: false
+          artifact_name: reporte-zap
+          cmd_options: "-a"

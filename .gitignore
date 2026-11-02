@@ -1,0 +1,28 @@
+# Entorno virtual y caché de Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Base de datos local y datos de instancia
+instance/
+*.db
+
+# Reportes generados por las pruebas
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+bandit-report.*
+pip-audit-report.*
+report_*.html
+zap*.html
+
+# Variables de entorno con secretos
+.env
+
+# Editores y sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,6 @@
+# Configuración de Bandit (análisis de seguridad de código Python).
+# Se analiza solo la carpeta app/. Las pruebas no se analizan porque usan
+# contraseñas de ejemplo y "assert", que Bandit marcaría como falsos positivos.
+exclude_dirs:
+  - tests
+  - .venv

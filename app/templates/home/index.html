@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}QuickFood · Inicio{% endblock %}
+{% block content %}
+<section class="qf-hero rounded-4 p-5 mb-4">
+  <h1 class="display-5 fw-bold">Tu comida favorita, sin enredos</h1>
+  <p class="lead mb-4">Consulta restaurantes, arma tu pedido y sigue su estado en un solo lugar.</p>
+  {% if endpoint_exists('restaurants.index') %}
+    <a class="btn btn-light btn-lg" href="{{ url_for('restaurants.index') }}">Ver restaurantes</a>
+  {% else %}
+    <span class="badge text-bg-light fs-6">Catálogo en construcción</span>
+  {% endif %}
+</section>
+
+<div class="row g-3">
+  <div class="col-md-4"><div class="card h-100 border-0 shadow-sm"><div class="card-body">
+    <h2 class="h5">1. Elige</h2><p class="mb-0 text-secondary">Explora los restaurantes y sus menús.</p>
+  </div></div></div>
+  <div class="col-md-4"><div class="card h-100 border-0 shadow-sm"><div class="card-body">
+    <h2 class="h5">2. Pide</h2><p class="mb-0 text-secondary">Agrega productos al carrito y confirma.</p>
+  </div></div></div>
+  <div class="col-md-4"><div class="card h-100 border-0 shadow-sm"><div class="card-body">
+    <h2 class="h5">3. Sigue</h2><p class="mb-0 text-secondary">Pendiente, preparando o entregado.</p>
+  </div></div></div>
+</div>
+{% endblock %}
