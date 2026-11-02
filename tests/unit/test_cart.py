@@ -245,3 +245,28 @@ def test_ver_carrito_no_hace_una_consulta_por_restaurante(client, app):
     ids = [product.id for product in products]
 
     assert _count_queries_viewing_cart(client, ids) == _count_queries_viewing_cart(client, ids[:1])
+
+
+def test_contenedores_con_aria_label_tienen_rol(client, producto):
+    """ARIA no permite aria-label en un div genérico; los lectores lo ignoran."""
+    with client.session_transaction() as session:
+        session["cart"] = {str(producto.id): 2}
+    html = client.get("/carrito").get_data(as_text=True)
+
+    assert re.search(r"<div(?![^>]*\brole=)[^>]*\baria-label=", html) is None
+    assert 'role="group" aria-label="Cantidad de Hamburguesa"' in html
+
+
+def test_botones_se_reactivan_al_volver_desde_la_cache_del_navegador():
+    script = (Path(__file__).parents[2] / "app" / "static" / "js" / "cart.js").read_text(encoding="utf-8")
+
+    assert '"pageshow"' in script
+
+
+@pytest.mark.parametrize("cart", [{}, None])
+def test_enlace_seguir_comprando_lleva_al_inicio_sin_modulo_de_restaurantes(client, producto, cart):
+    with client.session_transaction() as session:
+        session["cart"] = cart if cart is not None else {str(producto.id): 1}
+    html = client.get("/carrito").get_data(as_text=True)
+
+    assert re.search(r'href="/"[^>]*>\s*(Seguir comprando|Explorar restaurantes)', html)

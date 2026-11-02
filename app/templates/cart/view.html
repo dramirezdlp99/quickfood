@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Carrito · QuickFood{% endblock %}
 {% block content %}
+{% set shop_url = url_for('restaurants.index') if endpoint_exists('restaurants.index') else url_for('home.index') %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/cart.css') }}">
 <section id="cart-page" aria-labelledby="cart-title">
   {% if summary.lines %}
@@ -11,7 +12,7 @@
     </header>
 
     <div class="cart-layout">
-      <div class="cart-items" aria-label="Productos en el carrito">
+      <div class="cart-items" role="group" aria-label="Productos en el carrito">
         {% for line in summary.lines %}
           <article class="cart-item-card">
             <div class="cart-item-main">
@@ -27,7 +28,7 @@
             </div>
 
             <div class="cart-item-actions">
-              <div class="quantity-control" aria-label="Cantidad de {{ line.product.name }}">
+              <div class="quantity-control" role="group" aria-label="Cantidad de {{ line.product.name }}">
                 <form method="post" action="{{ url_for('cart.update') }}" class="cart-form">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <input type="hidden" name="product_id" value="{{ line.product.id }}">
@@ -95,11 +96,7 @@
           <p class="cart-coming-soon">La confirmación estará disponible pronto.</p>
         {% endif %}
 
-        {% if endpoint_exists('restaurants.index') %}
-          <a class="cart-continue-link" href="{{ url_for('restaurants.index') }}">Seguir comprando</a>
-        {% else %}
-          <a class="cart-continue-link" href="{{ url_for('home.index') }}">Seguir comprando</a>
-        {% endif %}
+        <a class="cart-continue-link" href="{{ shop_url }}">Seguir comprando</a>
       </aside>
     </div>
   {% else %}
@@ -112,11 +109,7 @@
       </svg>
       <h1 id="cart-title">Tu carrito está vacío</h1>
       <p>Explora el menú y encuentra algo rico para disfrutar.</p>
-      {% if endpoint_exists('restaurants.index') %}
-        <a class="btn qf-btn" href="{{ url_for('restaurants.index') }}">Explorar restaurantes</a>
-      {% else %}
-        <a class="btn qf-btn" href="{{ url_for('home.index') }}">Explorar restaurantes</a>
-      {% endif %}
+      <a class="btn qf-btn" href="{{ shop_url }}">Explorar restaurantes</a>
     </div>
   {% endif %}
 </section>
