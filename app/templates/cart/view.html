@@ -1,69 +1,128 @@
 {% extends "base.html" %}
 {% block title %}Carrito · QuickFood{% endblock %}
 {% block content %}
-<section aria-labelledby="cart-title">
-  <h1 id="cart-title" class="mb-4">Tu carrito</h1>
-
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cart.css') }}">
+<section id="cart-page" aria-labelledby="cart-title">
   {% if summary.lines %}
-    <div class="table-responsive">
-      <table class="table align-middle">
-        <thead>
-          <tr>
-            <th scope="col">Producto</th>
-            <th scope="col">Restaurante</th>
-            <th scope="col">Precio unitario</th>
-            <th scope="col">Cantidad</th>
-            <th scope="col">Subtotal</th>
-            <th scope="col"><span class="visually-hidden">Acciones</span></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for line in summary.lines %}
-            <tr>
-              <td>{{ line.product.name }}</td>
-              <td>{{ line.product.restaurant.name }}</td>
-              <td>{{ line.product.price|cop }}</td>
-              <td>
-                <form method="post" action="{{ url_for('cart.update') }}" class="d-flex gap-2">
+    <header class="cart-header">
+      <p class="cart-eyebrow">Tu selección</p>
+      <h1 id="cart-title">Tu carrito</h1>
+      <p class="cart-intro">Revisa tus productos antes de continuar.</p>
+    </header>
+
+    <div class="cart-layout">
+      <div class="cart-items" aria-label="Productos en el carrito">
+        {% for line in summary.lines %}
+          <article class="cart-item-card">
+            <div class="cart-item-main">
+              <div class="cart-item-copy">
+                <h2>{{ line.product.name }}</h2>
+                <p class="cart-restaurant">{{ line.product.restaurant.name }}</p>
+                <p class="cart-unit-price">Precio unitario <strong>{{ line.product.price|cop }}</strong></p>
+              </div>
+              <div class="cart-item-subtotal">
+                <span>Subtotal</span>
+                <strong>{{ line.subtotal|cop }}</strong>
+              </div>
+            </div>
+
+            <div class="cart-item-actions">
+              <div class="quantity-control" aria-label="Cantidad de {{ line.product.name }}">
+                <form method="post" action="{{ url_for('cart.update') }}" class="cart-form">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="product_id" value="{{ line.product.id }}">
+                  <input type="hidden" name="quantity" value="{{ line.quantity - 1 }}">
+                  <button class="quantity-button" type="submit" aria-label="Disminuir cantidad de {{ line.product.name }}">
+                    <span aria-hidden="true">−</span>
+                  </button>
+                </form>
+
+                <form method="post" action="{{ url_for('cart.update') }}" class="cart-form quantity-form js-quantity-form">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <input type="hidden" name="product_id" value="{{ line.product.id }}">
                   <label class="visually-hidden" for="quantity-{{ line.product.id }}">Cantidad de {{ line.product.name }}</label>
-                  <input id="quantity-{{ line.product.id }}" class="form-control" type="number"
-                         name="quantity" min="0" max="20" value="{{ line.quantity }}" required>
-                  <button class="btn btn-outline-primary" type="submit">Actualizar</button>
+                  <input id="quantity-{{ line.product.id }}" class="quantity-input js-quantity-input"
+                         type="number" name="quantity" min="1" max="20" value="{{ line.quantity }}" required>
                 </form>
-              </td>
-              <td>{{ line.subtotal|cop }}</td>
-              <td>
-                <form method="post" action="{{ url_for('cart.remove') }}">
+
+                <form method="post" action="{{ url_for('cart.update') }}" class="cart-form">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <input type="hidden" name="product_id" value="{{ line.product.id }}">
-                  <button class="btn btn-outline-danger" type="submit">Eliminar</button>
+                  <input type="hidden" name="quantity" value="{{ line.quantity + 1 }}">
+                  <button class="quantity-button" type="submit" aria-label="Aumentar cantidad de {{ line.product.name }}"
+                          {% if line.quantity >= 20 %}disabled{% endif %}>
+                    <span aria-hidden="true">+</span>
+                  </button>
                 </form>
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-        <tfoot>
-          <tr>
-            <th scope="row" colspan="4" class="text-end">Total</th>
-            <td class="fw-bold">{{ summary.total|cop }}</td>
-            <td></td>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
+              </div>
 
-    {% if endpoint_exists('orders.confirm') %}
-      <a class="btn btn-primary" href="{{ url_for('orders.confirm') }}">Confirmar pedido</a>
-    {% endif %}
+              <form method="post" action="{{ url_for('cart.remove') }}" class="cart-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="product_id" value="{{ line.product.id }}">
+                <button class="remove-button" type="submit" aria-label="Eliminar {{ line.product.name }} del carrito">
+                  <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+                    <path d="M4 7h16M10 11v6m4-6v6M5 7l1 14h12l1-14M9 7V4h6v3" />
+                  </svg>
+                  <span>Eliminar</span>
+                </button>
+              </form>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+
+      <aside class="cart-summary-card" aria-labelledby="summary-title">
+        <h2 id="summary-title">Resumen del pedido</h2>
+        <div class="summary-row">
+          <span>Productos</span>
+          <span>{{ summary.lines|sum(attribute='quantity') }}</span>
+        </div>
+        <div class="summary-row">
+          <span>Subtotal</span>
+          <span>{{ summary.total|cop }}</span>
+        </div>
+        <div class="summary-total">
+          <span>Total</span>
+          <strong>{{ summary.total|cop }}</strong>
+        </div>
+
+        {% if endpoint_exists('orders.confirm') %}
+          <form method="post" action="{{ url_for('orders.confirm') }}" class="cart-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn qf-btn cart-confirm-button" type="submit">Confirmar pedido</button>
+          </form>
+        {% else %}
+          <p class="cart-coming-soon">La confirmación estará disponible pronto.</p>
+        {% endif %}
+
+        {% if endpoint_exists('restaurants.index') %}
+          <a class="cart-continue-link" href="{{ url_for('restaurants.index') }}">Seguir comprando</a>
+        {% else %}
+          <a class="cart-continue-link" href="{{ url_for('home.index') }}">Seguir comprando</a>
+        {% endif %}
+      </aside>
+    </div>
   {% else %}
-    <p>Tu carrito está vacío.</p>
-    {% if endpoint_exists('restaurants.index') %}
-      <a class="btn btn-primary" href="{{ url_for('restaurants.index') }}">Seguir comprando</a>
-    {% else %}
-      <a class="btn btn-primary" href="{{ url_for('home.index') }}">Seguir comprando</a>
-    {% endif %}
+    <div class="cart-empty-card">
+      <svg class="cart-empty-icon" aria-hidden="true" viewBox="0 0 64 64" focusable="false">
+        <path d="M8 12h7l5.5 29h27L54 21H18M24 49h.1M46 49h.1" />
+        <circle cx="25" cy="52" r="3.5" />
+        <circle cx="47" cy="52" r="3.5" />
+        <path d="M25 29h20M35 19v20" />
+      </svg>
+      <h1 id="cart-title">Tu carrito está vacío</h1>
+      <p>Explora el menú y encuentra algo rico para disfrutar.</p>
+      {% if endpoint_exists('restaurants.index') %}
+        <a class="btn qf-btn" href="{{ url_for('restaurants.index') }}">Explorar restaurantes</a>
+      {% else %}
+        <a class="btn qf-btn" href="{{ url_for('home.index') }}">Explorar restaurantes</a>
+      {% endif %}
+    </div>
   {% endif %}
 </section>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script src="{{ url_for('static', filename='js/cart.js') }}" defer></script>
 {% endblock %}
