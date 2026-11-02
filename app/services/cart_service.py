@@ -1,0 +1,163 @@
+"""Servicios y estructuras para gestionar el carrito de compras."""
+
+from dataclasses import dataclass
+from typing import Any
+
+from flask import session as flask_session
+
+from ..extensions import db
+from ..models import Product
+
+MAX_QUANTITY = 20
+
+
+class InvalidQuantityError(ValueError):
+    """La cantidad no es un entero entre 1 y el máximo permitido."""
+
+
+class InvalidProductIdError(ValueError):
+    """El identificador del producto no es válido."""
+
+
+class QuantityValidator:
+    """Convierte y valida cantidades de productos."""
+
+    @staticmethod
+    def validate(value: Any) -> int:
+        """Devuelve la cantidad como entero si está entre 1 y 20."""
+        if isinstance(value, bool):
+            raise InvalidQuantityError("La cantidad debe ser un entero entre 1 y 20.")
+        if isinstance(value, int):
+            quantity = value
+        elif isinstance(value, str):
+            text = value.strip()
+            if not text or not text.isdecimal():
+                raise InvalidQuantityError("La cantidad debe ser un entero entre 1 y 20.")
+            quantity = int(text)
+        else:
+            raise InvalidQuantityError("La cantidad debe ser un entero entre 1 y 20.")
+
+        if not 1 <= quantity <= MAX_QUANTITY:
+            raise InvalidQuantityError("La cantidad debe estar entre 1 y 20.")
+        return quantity
+
+
+class CartStorage:
+    """Lee y escribe el carrito en una sesión compatible con Flask."""
+
+    def __init__(self, storage: Any | None = None) -> None:
+        self._session = storage if storage is not None else flask_session
+
+    def read(self) -> dict[int, int]:
+        """Normaliza las claves de sesión a enteros en un solo lugar."""
+        raw_cart = self._session.get("cart", {})
+        if not isinstance(raw_cart, dict):
+            self.write({})
+            return {}
+
+        normalized: dict[int, int] = {}
+        for raw_id, raw_quantity in raw_cart.items():
+            try:
+                product_id = int(raw_id)
+                quantity = int(raw_quantity)
+            except (TypeError, ValueError):
+                continue
+            if product_id > 0 and quantity > 0:
+                normalized[product_id] = quantity
+
+        self.write(normalized)
+        return normalized
+
+    def write(self, cart: dict[int, int]) -> None:
+        """Guarda únicamente identificadores y cantidades en la sesión."""
+        self._session["cart"] = {str(product_id): quantity for product_id, quantity in cart.items()}
+
+
+@dataclass(frozen=True)
+class CartLine:
+    """Una línea del carrito con su subtotal calculado."""
+
+    product: Product
+    quantity: int
+    subtotal: int
+
+
+@dataclass(frozen=True)
+class CartSummary:
+    """Líneas y total del carrito."""
+
+    lines: tuple[CartLine, ...]
+    total: int
+
+
+class CartService:
+    """Gestiona cantidades y construye resúmenes con precios de la base de datos."""
+
+    def __init__(self, storage: CartStorage) -> None:
+        self.storage = storage
+
+    def add(self, product_id: Any, quantity: Any) -> None:
+        """Agrega unidades de un producto existente al carrito."""
+        product = self._get_product(product_id)
+        amount = QuantityValidator.validate(quantity)
+        cart = self.storage.read()
+        cart[product.id] = QuantityValidator.validate(cart.get(product.id, 0) + amount)
+        self.storage.write(cart)
+
+    def update(self, product_id: Any, quantity: Any) -> None:
+        """Actualiza una línea; cero elimina la línea del carrito."""
+        product_id = self._normalize_product_id(product_id)
+        if quantity == 0 or quantity == "0":
+            self.remove(product_id)
+            return
+
+        amount = QuantityValidator.validate(quantity)
+        cart = self.storage.read()
+        if product_id in cart:
+            cart[product_id] = amount
+            self.storage.write(cart)
+
+    def remove(self, product_id: Any) -> None:
+        """Elimina un producto del carrito si está presente."""
+        product_id = self._normalize_product_id(product_id)
+        cart = self.storage.read()
+        cart.pop(product_id, None)
+        self.storage.write(cart)
+
+    def summary(self) -> CartSummary:
+        """Calcula subtotales y total usando productos persistidos."""
+        cart = self.storage.read()
+        products = Product.query.filter(Product.id.in_(cart)).all() if cart else []
+        product_by_id = {product.id: product for product in products}
+        valid_cart = {product_id: quantity for product_id, quantity in cart.items() if product_id in product_by_id}
+        self.storage.write(valid_cart)
+
+        lines = tuple(
+            CartLine(
+                product=product_by_id[product_id],
+                quantity=quantity,
+                subtotal=product_by_id[product_id].price * quantity,
+            )
+            for product_id, quantity in valid_cart.items()
+        )
+        return CartSummary(lines=lines, total=sum(line.subtotal for line in lines))
+
+    @staticmethod
+    def _normalize_product_id(value: Any) -> int:
+        """Convierte el identificador recibido o lanza un error de dominio."""
+        try:
+            product_id = int(value)
+        except (TypeError, ValueError) as error:
+            raise InvalidProductIdError("El producto seleccionado no es válido.") from error
+        if product_id <= 0:
+            raise InvalidProductIdError("El producto seleccionado no es válido.")
+        return product_id
+
+    @classmethod
+    def _get_product(cls, product_id: Any) -> Product:
+        """Obtiene el producto desde la base de datos."""
+        normalized_id = cls._normalize_product_id(product_id)
+        product = db.session.get(Product, normalized_id)
+        if product is None:
+            raise InvalidProductIdError("El producto seleccionado no existe.")
+        return product
