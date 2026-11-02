@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Pedidos · Administración{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <h1 class="h3 mb-0">Pedidos</h1>
+  <form method="get" class="d-flex gap-2">
+    <select class="form-select form-select-sm" name="estado" aria-label="Filtrar por estado">
+      <option value="">Todos los estados</option>
+      {% for s in statuses %}
+        <option value="{{ s }}" {% if s == status_filter %}selected{% endif %}>{{ s|capitalize }}</option>
+      {% endfor %}
+    </select>
+    <button class="btn btn-sm btn-outline-secondary" type="submit">Filtrar</button>
+  </form>
+</div>
+
+{% if orders %}
+<div class="table-responsive bg-white rounded-3 shadow-sm">
+  <table class="table table-hover align-middle mb-0">
+    <thead class="table-light">
+      <tr><th>#</th><th>Cliente</th><th>Fecha</th><th class="text-end">Total</th><th>Estado</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for o in orders %}
+      <tr>
+        <td>{{ o.id }}</td>
+        <td>{{ o.user.name }}</td>
+        <td>{{ o.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td class="text-end">{{ o.total|cop }}</td>
+        <td><span class="badge qf-status qf-status-{{ o.status }}">{{ o.status }}</span></td>
+        <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.order_detail', order_id=o.id) }}">Ver</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+  <div class="alert alert-info">No hay pedidos{% if status_filter %} con estado «{{ status_filter }}»{% endif %}.</div>
+{% endif %}
+{% endblock %}
