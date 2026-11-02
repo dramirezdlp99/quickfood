@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from flask import session as flask_session
+from sqlalchemy.orm import selectinload
 
 from ..extensions import db
 from ..models import Product
@@ -135,7 +136,11 @@ class CartService:
     def summary(self) -> CartSummary:
         """Calcula subtotales y total usando productos persistidos."""
         cart = self.storage.read()
-        products = Product.query.filter(Product.id.in_(cart)).all() if cart else []
+        products = (
+            Product.query.options(selectinload(Product.restaurant)).filter(Product.id.in_(cart)).all()
+            if cart
+            else []
+        )
         product_by_id = {product.id: product for product in products}
         valid_cart = {product_id: quantity for product_id, quantity in cart.items() if product_id in product_by_id}
         self.storage.write(valid_cart)

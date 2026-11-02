@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 
 import pytest
+from sqlalchemy import event
 
 from app.extensions import db
 from app.models import Product, Restaurant
@@ -213,3 +214,34 @@ def test_eliminar_producto_que_no_esta_en_carrito_avisa_y_no_rompe_carrito(clien
     assert "no está en el carrito" in response.get_data(as_text=True)
     with client.session_transaction() as session:
         assert session.get("cart", {}) == {}
+
+
+def _count_queries_viewing_cart(client, product_ids):
+    """Cuenta las consultas SQL que hace GET /carrito con esos productos."""
+    statements = []
+
+    def _record(*_args):
+        statements.append(1)
+
+    with client.session_transaction() as session:
+        session["cart"] = {str(product_id): 1 for product_id in product_ids}
+    db.session.expire_all()
+    event.listen(db.engine, "before_cursor_execute", _record)
+    try:
+        response = client.get("/carrito")
+    finally:
+        event.remove(db.engine, "before_cursor_execute", _record)
+    assert response.status_code == 200
+    return len(statements)
+
+
+def test_ver_carrito_no_hace_una_consulta_por_restaurante(client, app):
+    products = [
+        Product(restaurant=Restaurant(name=f"Restaurante {n}", cuisine="Rápida"), name=f"Plato {n}", price=1000)
+        for n in range(3)
+    ]
+    db.session.add_all(products)
+    db.session.commit()
+    ids = [product.id for product in products]
+
+    assert _count_queries_viewing_cart(client, ids) == _count_queries_viewing_cart(client, ids[:1])
