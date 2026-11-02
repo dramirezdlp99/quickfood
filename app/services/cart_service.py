@@ -11,6 +11,7 @@ from ..models import Product
 MAX_QUANTITY = 20
 MAX_PRODUCT_ID = 2**31 - 1  # límite de INTEGER en SQLite/PostgreSQL
 QUANTITY_ERROR = f"La cantidad debe ser un número entero entre 1 y {MAX_QUANTITY}."
+LIMIT_ERROR = f"Puedes tener máximo {MAX_QUANTITY} unidades de cada producto."
 INVALID_PRODUCT_ERROR = "El producto seleccionado no es válido."
 
 
@@ -58,12 +59,18 @@ class CartStorage:
             if product_id > 0 and quantity > 0:
                 normalized[product_id] = quantity
 
-        self.write(normalized)
+        if self._serialize(normalized) != raw_cart:
+            self.write(normalized)
         return normalized
 
     def write(self, cart: dict[int, int]) -> None:
         """Guarda únicamente identificadores y cantidades en la sesión."""
-        self._session["cart"] = {str(product_id): quantity for product_id, quantity in cart.items()}
+        self._session["cart"] = self._serialize(cart)
+
+    @staticmethod
+    def _serialize(cart: dict[int, int]) -> dict[str, int]:
+        """Convierte las claves a texto, como las guarda la sesión JSON."""
+        return {str(product_id): quantity for product_id, quantity in cart.items()}
 
 
 @dataclass(frozen=True)
@@ -91,25 +98,27 @@ class CartService:
 
     def add(self, product_id: Any, quantity: Any) -> None:
         """Agrega unidades de un producto existente al carrito."""
-        product = self._get_product(product_id)
         amount = QuantityValidator.validate(quantity)
+        product = self._get_product(product_id)
         cart = self.storage.read()
-        cart[product.id] = QuantityValidator.validate(cart.get(product.id, 0) + amount)
+        total = cart.get(product.id, 0) + amount
+        if total > MAX_QUANTITY:
+            raise InvalidQuantityError(LIMIT_ERROR)
+        cart[product.id] = total
         self.storage.write(cart)
 
     def update(self, product_id: Any, quantity: Any) -> bool:
         """Actualiza una línea; cero elimina la línea del carrito."""
-        product_id = self._normalize_product_id(product_id)
-        self._get_product(product_id)
+        is_zero = str(quantity).strip().isdecimal() and int(quantity) == 0
+        amount = None if is_zero else QuantityValidator.validate(quantity)
+        product = self._get_product(product_id)
         cart = self.storage.read()
-        if product_id not in cart:
+        if product.id not in cart:
             return False
-        if quantity == 0 or quantity == "0":
-            cart.pop(product_id)
-            self.storage.write(cart)
-            return True
-
-        cart[product_id] = QuantityValidator.validate(quantity)
+        if is_zero:
+            cart.pop(product.id)
+        else:
+            cart[product.id] = amount
         self.storage.write(cart)
         return True
 
