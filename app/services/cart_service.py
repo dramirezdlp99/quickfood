@@ -104,25 +104,31 @@ class CartService:
         cart[product.id] = QuantityValidator.validate(cart.get(product.id, 0) + amount)
         self.storage.write(cart)
 
-    def update(self, product_id: Any, quantity: Any) -> None:
+    def update(self, product_id: Any, quantity: Any) -> bool:
         """Actualiza una línea; cero elimina la línea del carrito."""
         product_id = self._normalize_product_id(product_id)
+        self._get_product(product_id)
+        cart = self.storage.read()
+        if product_id not in cart:
+            return False
         if quantity == 0 or quantity == "0":
-            self.remove(product_id)
-            return
-
-        amount = QuantityValidator.validate(quantity)
-        cart = self.storage.read()
-        if product_id in cart:
-            cart[product_id] = amount
+            cart.pop(product_id)
             self.storage.write(cart)
+            return True
 
-    def remove(self, product_id: Any) -> None:
-        """Elimina un producto del carrito si está presente."""
-        product_id = self._normalize_product_id(product_id)
-        cart = self.storage.read()
-        cart.pop(product_id, None)
+        cart[product_id] = QuantityValidator.validate(quantity)
         self.storage.write(cart)
+        return True
+
+    def remove(self, product_id: Any) -> bool:
+        """Elimina un producto del carrito si está presente."""
+        product = self._get_product(product_id)
+        cart = self.storage.read()
+        if product.id not in cart:
+            return False
+        cart.pop(product.id)
+        self.storage.write(cart)
+        return True
 
     def summary(self) -> CartSummary:
         """Calcula subtotales y total usando productos persistidos."""

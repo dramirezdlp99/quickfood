@@ -42,13 +42,16 @@ def add():
 def update():
     """Actualiza la cantidad de una línea y redirige al carrito."""
     try:
-        _service().update(request.form.get("product_id"), request.form.get("quantity"))
+        updated = _service().update(request.form.get("product_id"), request.form.get("quantity"))
     except InvalidQuantityError:
         flash("La cantidad debe ser un número entero entre 1 y 20.", "warning")
     except InvalidProductIdError:
         flash("No se pudo actualizar el producto seleccionado.", "warning")
     else:
-        flash("Carrito actualizado.", "success")
+        if updated:
+            flash("Carrito actualizado.", "success")
+        else:
+            flash("El producto no está en el carrito.", "warning")
     return redirect(url_for("cart.view"))
 
 
@@ -56,9 +59,12 @@ def update():
 def remove():
     """Elimina una línea y redirige al carrito."""
     try:
-        _service().remove(request.form.get("product_id"))
+        removed = _service().remove(request.form.get("product_id"))
     except InvalidProductIdError:
         flash("No se pudo eliminar el producto seleccionado.", "warning")
     else:
-        flash("Producto eliminado del carrito.", "success")
+        if removed:
+            flash("Producto eliminado del carrito.", "success")
+        else:
+            flash("El producto no está en el carrito.", "warning")
     return redirect(url_for("cart.view"))

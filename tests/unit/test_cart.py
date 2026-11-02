@@ -88,3 +88,73 @@ def test_ignorar_precio_manipulado_y_usar_precio_de_base_de_datos(
     assert "$ 12.500" in body
     assert "$ -1" not in body
     assert "$ 999.999" not in body
+
+
+def test_actualizar_con_cantidad_invalida_avisa_y_conserva_carrito(client, producto):
+    with client.session_transaction() as session:
+        session["cart"] = {str(producto.id): 2}
+
+    response = client.post(
+        "/carrito/actualizar",
+        data={"product_id": producto.id, "quantity": "abc"},
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert "La cantidad debe ser un número entero entre 1 y 20." in response.get_data(as_text=True)
+    with client.session_transaction() as session:
+        assert session["cart"] == {str(producto.id): 2}
+
+
+def test_actualizar_producto_inexistente_avisa_y_conserva_carrito(client, producto):
+    with client.session_transaction() as session:
+        session["cart"] = {str(producto.id): 2}
+
+    response = client.post(
+        "/carrito/actualizar",
+        data={"product_id": "999999", "quantity": "1"},
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert "No se pudo actualizar el producto seleccionado." in response.get_data(as_text=True)
+    with client.session_transaction() as session:
+        assert session["cart"] == {str(producto.id): 2}
+
+
+def test_actualizar_producto_que_no_esta_en_carrito_avisa_y_no_lo_agrega(client, producto):
+    response = client.post(
+        "/carrito/actualizar",
+        data={"product_id": producto.id, "quantity": "1"},
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert "no está en el carrito" in response.get_data(as_text=True)
+    with client.session_transaction() as session:
+        assert session.get("cart", {}) == {}
+
+
+def test_eliminar_producto_inexistente_avisa_y_conserva_carrito(client, producto):
+    with client.session_transaction() as session:
+        session["cart"] = {str(producto.id): 2}
+
+    response = client.post(
+        "/carrito/eliminar", data={"product_id": "999999"}, follow_redirects=True
+    )
+
+    assert response.status_code == 200
+    assert "No se pudo eliminar el producto seleccionado." in response.get_data(as_text=True)
+    with client.session_transaction() as session:
+        assert session["cart"] == {str(producto.id): 2}
+
+
+def test_eliminar_producto_que_no_esta_en_carrito_avisa_y_no_rompe_carrito(client, producto):
+    response = client.post(
+        "/carrito/eliminar", data={"product_id": producto.id}, follow_redirects=True
+    )
+
+    assert response.status_code == 200
+    assert "no está en el carrito" in response.get_data(as_text=True)
+    with client.session_transaction() as session:
+        assert session.get("cart", {}) == {}
