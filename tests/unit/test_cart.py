@@ -1,5 +1,7 @@
 """Pruebas iniciales del carrito (casos 1 a 5 de la propuesta)."""
 
+import re
+
 import pytest
 
 from app.extensions import db
@@ -150,7 +152,37 @@ def test_eliminar_producto_inexistente_avisa_y_conserva_carrito(client, producto
 
 
 @pytest.mark.parametrize("url", ["/carrito/agregar", "/carrito/actualizar", "/carrito/eliminar"])
-@pytest.mark.parametrize("product_id", ["9" * 25, str(2**31)])
+def test_post_sin_csrf_token_es_rechazado(app, client, producto, url):
+    app.config["WTF_CSRF_ENABLED"] = True
+    with client.session_transaction() as session:
+        session["cart"] = {str(producto.id): 2}
+
+    response = client.post(url, data={"product_id": producto.id, "quantity": "1"})
+
+    assert response.status_code == 400
+    with client.session_transaction() as session:
+        assert session["cart"] == {str(producto.id): 2}
+
+
+def test_post_con_csrf_token_de_la_plantilla_es_aceptado(app, client, producto):
+    app.config["WTF_CSRF_ENABLED"] = True
+    with client.session_transaction() as session:
+        session["cart"] = {str(producto.id): 2}
+    html = client.get("/carrito").get_data(as_text=True)
+    token = re.search(r'name="csrf_token" value="([^"]+)"', html).group(1)
+
+    response = client.post(
+        "/carrito/actualizar",
+        data={"csrf_token": token, "product_id": producto.id, "quantity": "3"},
+    )
+
+    assert response.status_code == 302
+    with client.session_transaction() as session:
+        assert session["cart"] == {str(producto.id): 3}
+
+
+@pytest.mark.parametrize("url", ["/carrito/agregar", "/carrito/actualizar", "/carrito/eliminar"])
+@pytest.mark.parametrize("product_id",["9" * 25, str(2**31)])
 def test_product_id_fuera_de_rango_avisa_sin_error_500(client, producto, url, product_id):
     response = client.post(
         url, data={"product_id": product_id, "quantity": "1"}, follow_redirects=True
