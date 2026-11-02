@@ -17,7 +17,7 @@ from flask import abort, flash, g, redirect, request, session, url_for
 from ..extensions import db
 from ..models import User
 
-EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s.]+(?:\.[^@\s.]+)+$")
 MIN_PASSWORD_LENGTH = 8
 
 
