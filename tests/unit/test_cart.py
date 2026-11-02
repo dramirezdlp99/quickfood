@@ -149,6 +149,17 @@ def test_eliminar_producto_inexistente_avisa_y_conserva_carrito(client, producto
         assert session["cart"] == {str(producto.id): 2}
 
 
+@pytest.mark.parametrize("url", ["/carrito/agregar", "/carrito/actualizar", "/carrito/eliminar"])
+@pytest.mark.parametrize("product_id", ["9" * 25, str(2**31)])
+def test_product_id_fuera_de_rango_avisa_sin_error_500(client, producto, url, product_id):
+    response = client.post(
+        url, data={"product_id": product_id, "quantity": "1"}, follow_redirects=True
+    )
+
+    assert response.status_code == 200
+    assert "No se pudo" in response.get_data(as_text=True)
+
+
 def test_eliminar_producto_que_no_esta_en_carrito_avisa_y_no_rompe_carrito(client, producto):
     response = client.post(
         "/carrito/eliminar", data={"product_id": producto.id}, follow_redirects=True

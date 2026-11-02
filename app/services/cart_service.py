@@ -9,6 +9,7 @@ from ..extensions import db
 from ..models import Product
 
 MAX_QUANTITY = 20
+MAX_PRODUCT_ID = 2**31 - 1  # límite de INTEGER en SQLite/PostgreSQL
 
 
 class InvalidQuantityError(ValueError):
@@ -155,7 +156,7 @@ class CartService:
             product_id = int(value)
         except (TypeError, ValueError) as error:
             raise InvalidProductIdError("El producto seleccionado no es válido.") from error
-        if product_id <= 0:
+        if not 1 <= product_id <= MAX_PRODUCT_ID:
             raise InvalidProductIdError("El producto seleccionado no es válido.")
         return product_id
 
