@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Carrito · QuickFood{% endblock %}
+{% block content %}
+<section aria-labelledby="cart-title">
+  <h1 id="cart-title" class="mb-4">Tu carrito</h1>
+
+  {% if summary.lines %}
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead>
+          <tr>
+            <th scope="col">Producto</th>
+            <th scope="col">Restaurante</th>
+            <th scope="col">Precio unitario</th>
+            <th scope="col">Cantidad</th>
+            <th scope="col">Subtotal</th>
+            <th scope="col"><span class="visually-hidden">Acciones</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for line in summary.lines %}
+            <tr>
+              <td>{{ line.product.name }}</td>
+              <td>{{ line.product.restaurant.name }}</td>
+              <td>{{ line.product.price|cop }}</td>
+              <td>
+                <form method="post" action="{{ url_for('cart.update') }}" class="d-flex gap-2">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="product_id" value="{{ line.product.id }}">
+                  <label class="visually-hidden" for="quantity-{{ line.product.id }}">Cantidad de {{ line.product.name }}</label>
+                  <input id="quantity-{{ line.product.id }}" class="form-control" type="number"
+                         name="quantity" min="0" max="20" value="{{ line.quantity }}" required>
+                  <button class="btn btn-outline-primary" type="submit">Actualizar</button>
+                </form>
+              </td>
+              <td>{{ line.subtotal|cop }}</td>
+              <td>
+                <form method="post" action="{{ url_for('cart.remove') }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="product_id" value="{{ line.product.id }}">
+                  <button class="btn btn-outline-danger" type="submit">Eliminar</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th scope="row" colspan="4" class="text-end">Total</th>
+            <td class="fw-bold">{{ summary.total|cop }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    {% if endpoint_exists('orders.confirm') %}
+      <a class="btn btn-primary" href="{{ url_for('orders.confirm') }}">Confirmar pedido</a>
+    {% endif %}
+  {% else %}
+    <p>Tu carrito está vacío.</p>
+    {% if endpoint_exists('restaurants.index') %}
+      <a class="btn btn-primary" href="{{ url_for('restaurants.index') }}">Seguir comprando</a>
+    {% else %}
+      <a class="btn btn-primary" href="{{ url_for('home.index') }}">Seguir comprando</a>
+    {% endif %}
+  {% endif %}
+</section>
+{% endblock %}
