@@ -29,8 +29,11 @@
 .quantity-button:hover:not(:disabled) { background: #fff0e6; color: var(--qf-primary-dark); }
 .quantity-button:disabled { cursor: not-allowed; opacity: .4; }
 .quantity-input { appearance: textfield; font-weight: 700; }
+.quantity-form { display: inline-flex; align-items: center; gap: .25rem; }
+.quantity-update-button { height: 2.4rem; padding: 0 .55rem; border: 0; border-radius: .55rem; background: transparent; color: var(--qf-primary-dark); font-size: .78rem; font-weight: 700; }
+.quantity-update-button:hover { background: #fff0e6; }
 .quantity-input::-webkit-inner-spin-button, .quantity-input::-webkit-outer-spin-button { margin: 0; appearance: none; }
-.quantity-input:focus-visible, .quantity-button:focus-visible, .remove-button:focus-visible, .cart-continue-link:focus-visible { outline: 3px solid rgba(232, 89, 12, .35); outline-offset: 2px; }
+.quantity-input:focus-visible, .quantity-button:focus-visible, .quantity-update-button:focus-visible, .remove-button:focus-visible, .cart-continue-link:focus-visible { outline: 3px solid rgba(232, 89, 12, .35); outline-offset: 2px; }
 .remove-button { display: inline-flex; align-items: center; gap: .4rem; padding: .45rem .6rem; border: 0; border-radius: .6rem; background: transparent; color: #8b4a37; font-size: .88rem; }
 .remove-button:hover { background: #fff1ec; color: #9f3219; }
 .remove-button svg { width: 1.1rem; height: 1.1rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; }

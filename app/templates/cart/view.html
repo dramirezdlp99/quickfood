@@ -44,6 +44,7 @@
                   <label class="visually-hidden" for="quantity-{{ line.product.id }}">Cantidad de {{ line.product.name }}</label>
                   <input id="quantity-{{ line.product.id }}" class="quantity-input"
                          type="number" name="quantity" min="1" max="{{ max_quantity }}" value="{{ line.quantity }}" required>
+                  <button class="quantity-update-button" type="submit" aria-label="Actualizar cantidad de {{ line.product.name }}">Actualizar</button>
                 </form>
 
                 <form method="post" action="{{ url_for('cart.update') }}" class="cart-form">

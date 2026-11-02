@@ -270,3 +270,18 @@ def test_enlace_seguir_comprando_lleva_al_inicio_sin_modulo_de_restaurantes(clie
     html = client.get("/carrito").get_data(as_text=True)
 
     assert re.search(r'href="/"[^>]*>\s*(Seguir comprando|Explorar restaurantes)', html)
+
+
+def test_formulario_de_cantidad_tiene_boton_actualizar_visible(client, producto):
+    """Sin autoenvío, el usuario necesita un botón explícito para guardar la cantidad escrita."""
+    with client.session_transaction() as session:
+        session["cart"] = {str(producto.id): 2}
+    html = client.get("/carrito").get_data(as_text=True)
+
+    form = re.search(r'<form[^>]*quantity-form[^>]*>(.*?)</form>', html, re.S).group(1)
+    assert 'name="quantity"' in form
+    button = re.search(r'<button[^>]*type="submit"[^>]*>(.*?)</button>', form, re.S)
+    assert button is not None
+    assert 'aria-label="Actualizar cantidad de Hamburguesa"' in button.group(0)
+    assert "visually-hidden" not in button.group(0)
+    assert "Actualizar" in button.group(1)
