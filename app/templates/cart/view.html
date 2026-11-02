@@ -42,7 +42,7 @@
                   <input type="hidden" name="product_id" value="{{ line.product.id }}">
                   <label class="visually-hidden" for="quantity-{{ line.product.id }}">Cantidad de {{ line.product.name }}</label>
                   <input id="quantity-{{ line.product.id }}" class="quantity-input"
-                         type="number" name="quantity" min="1" max="20" value="{{ line.quantity }}" required>
+                         type="number" name="quantity" min="1" max="{{ max_quantity }}" value="{{ line.quantity }}" required>
                 </form>
 
                 <form method="post" action="{{ url_for('cart.update') }}" class="cart-form">
@@ -50,7 +50,7 @@
                   <input type="hidden" name="product_id" value="{{ line.product.id }}">
                   <input type="hidden" name="quantity" value="{{ line.quantity + 1 }}">
                   <button class="quantity-button" type="submit" aria-label="Aumentar cantidad de {{ line.product.name }}"
-                          {% if line.quantity >= 20 %}disabled{% endif %}>
+                          {% if line.quantity >= max_quantity %}disabled{% endif %}>
                     <span aria-hidden="true">+</span>
                   </button>
                 </form>

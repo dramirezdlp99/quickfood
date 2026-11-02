@@ -10,6 +10,8 @@ from ..models import Product
 
 MAX_QUANTITY = 20
 MAX_PRODUCT_ID = 2**31 - 1  # límite de INTEGER en SQLite/PostgreSQL
+QUANTITY_ERROR = f"La cantidad debe ser un número entero entre 1 y {MAX_QUANTITY}."
+INVALID_PRODUCT_ERROR = "El producto seleccionado no es válido."
 
 
 class InvalidQuantityError(ValueError):
@@ -25,22 +27,12 @@ class QuantityValidator:
 
     @staticmethod
     def validate(value: Any) -> int:
-        """Devuelve la cantidad como entero si está entre 1 y 20."""
-        if isinstance(value, bool):
-            raise InvalidQuantityError("La cantidad debe ser un entero entre 1 y 20.")
-        if isinstance(value, int):
-            quantity = value
-        elif isinstance(value, str):
-            text = value.strip()
-            if not text or not text.isdecimal():
-                raise InvalidQuantityError("La cantidad debe ser un entero entre 1 y 20.")
-            quantity = int(text)
-        else:
-            raise InvalidQuantityError("La cantidad debe ser un entero entre 1 y 20.")
-
-        if not 1 <= quantity <= MAX_QUANTITY:
-            raise InvalidQuantityError("La cantidad debe estar entre 1 y 20.")
-        return quantity
+        """Devuelve la cantidad como entero si está entre 1 y el máximo."""
+        if isinstance(value, str) and value.strip().isdecimal():
+            value = int(value)
+        if isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= MAX_QUANTITY:
+            raise InvalidQuantityError(QUANTITY_ERROR)
+        return value
 
 
 class CartStorage:
@@ -155,9 +147,9 @@ class CartService:
         try:
             product_id = int(value)
         except (TypeError, ValueError) as error:
-            raise InvalidProductIdError("El producto seleccionado no es válido.") from error
+            raise InvalidProductIdError(INVALID_PRODUCT_ERROR) from error
         if not 1 <= product_id <= MAX_PRODUCT_ID:
-            raise InvalidProductIdError("El producto seleccionado no es válido.")
+            raise InvalidProductIdError(INVALID_PRODUCT_ERROR)
         return product_id
 
     @classmethod
