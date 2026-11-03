@@ -18,9 +18,12 @@ detectó **antes** de integrar el cambio, y cómo se corrigió.
 | 11 | 2026-11-03 | Ramirez | Pytest | Demo intencional: se quitó `@admin_required` de `/admin/pedidos`; fallaron 2 pruebas de seguridad (un usuario sin sesión y un cliente podían entrar) | Se restauró el decorador; las 106 pruebas pasan | #3 |
 | 12 | 2026-11-03 | Ramirez | Bandit (B105) | Demo intencional: clave secreta escrita en `app/config.py`, línea 15. Las pruebas, SonarQube y ZAP pasaron; solo Bandit lo detectó | Se volvió a leer de `QUICKFOOD_SECRET_KEY` o se genera aleatoria | #3 |
 | 13 | 2026-11-03 | Ramirez | pip-audit | Demo intencional: `requests==2.31.0` con vulnerabilidades conocidas (PYSEC-2026-1872, -1873, -2275) | Actualizado a `requests==2.34.2` | #3 |
+| 14 | 2026-11-03 | Ramirez | OWASP ZAP Baseline | 2 alertas Medium (CSP con comodín en img-src y style-src 'unsafe-inline') y 2 Low (faltaban Cross-Origin-Embedder-Policy y Cross-Origin-Resource-Policy) | CSP sin comodín ni unsafe-inline; cabeceras COEP require-corp y CORP same-origin; prueba nueva en tests/unit/test_app.py | #4 |
 
 ## Falsos positivos o hallazgos aceptados
 
 | Herramienta | Hallazgo | Por qué no se corrige |
 |---|---|---|
 | Consola del navegador (CSP) | La CSP bloquea los `.map` de Bootstrap desde `cdn.jsdelivr.net` | Solo ocurre con DevTools abierto y no afecta al usuario |
+| OWASP ZAP (Low) | Server Leaks Version Information: el servidor de desarrollo envía "Werkzeug/x Python/y" | La cabecera la pone el servidor de desarrollo de Flask, no la app; en producción se usaría gunicorn o nginx sin esa cabecera |
+| OWASP ZAP (10 Informational) | Login detectado, cookie de sesión firmada (Base64), cabeceras Sec-Fetch ausentes en las peticiones de ZAP, contenido cacheable | Son observaciones informativas, no vulnerabilidades |
