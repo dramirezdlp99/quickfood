@@ -30,6 +30,14 @@ def test_respuestas_incluyen_cabeceras_de_seguridad(client):
     assert headers["X-Content-Type-Options"] == "nosniff"
     assert headers["X-Frame-Options"] == "DENY"
 
+def test_cabeceras_corregidas_por_reporte_zap(client):
+    headers = client.get("/").headers
+    csp = headers["Content-Security-Policy"]
+    assert "unsafe-inline" not in csp
+    assert "https:;" not in csp
+    assert headers["Cross-Origin-Resource-Policy"] == "same-origin"
+    assert headers["Cross-Origin-Embedder-Policy"] == "require-corp"
+
 
 def test_filtro_cop_formatea_pesos(app):
     assert app.jinja_env.filters["cop"](12500) == "$ 12.500"

@@ -80,8 +80,8 @@ def _register_security_headers(app: Flask) -> None:
     csp = (
         "default-src 'self'; "
         "script-src 'self' https://cdn.jsdelivr.net; "
-        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
-        "img-src 'self' data: https:; "
+        "style-src 'self' https://cdn.jsdelivr.net; "
+        "img-src 'self' data:; "
         "font-src 'self' https://cdn.jsdelivr.net; "
         "form-action 'self'; "
         "frame-ancestors 'none'; "
@@ -96,4 +96,6 @@ def _register_security_headers(app: Flask) -> None:
         response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
         response.headers.setdefault("Permissions-Policy", "geolocation=(), camera=(), microphone=()")
         response.headers.setdefault("Cross-Origin-Opener-Policy", "same-origin")
+        response.headers.setdefault("Cross-Origin-Embedder-Policy", "require-corp")
+        response.headers.setdefault("Cross-Origin-Resource-Policy", "same-origin")
         return response
