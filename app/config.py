@@ -12,7 +12,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 class Config:
-    SECRET_KEY = os.environ.get("QUICKFOOD_SECRET_KEY") or secrets.token_hex(32)
+    SECRET_KEY = "quickfood-clave-123"
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         "QUICKFOOD_DATABASE_URL", f"sqlite:///{BASE_DIR / 'instance' / 'quickfood.db'}"
     )
