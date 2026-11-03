@@ -10,7 +10,6 @@ bp = Blueprint("admin", __name__, url_prefix="/admin")
 
 
 @bp.get("/pedidos")
-@admin_required
 def orders():
     status_filter = request.args.get("estado", "")
     query = Order.query.order_by(Order.created_at.desc())
