@@ -264,12 +264,12 @@ def test_botones_se_reactivan_al_volver_desde_la_cache_del_navegador():
 
 
 @pytest.mark.parametrize("cart", [{}, None])
-def test_enlace_seguir_comprando_lleva_al_inicio_sin_modulo_de_restaurantes(client, producto, cart):
+def test_enlace_seguir_comprando_lleva_al_catalogo(client, producto, cart):
     with client.session_transaction() as session:
         session["cart"] = cart if cart is not None else {str(producto.id): 1}
     html = client.get("/carrito").get_data(as_text=True)
 
-    assert re.search(r'href="/"[^>]*>\s*(Seguir comprando|Explorar restaurantes)', html)
+    assert re.search(r'href="/restaurantes"[^>]*>\s*(Seguir comprando|Explorar restaurantes)', html)
 
 
 def test_formulario_de_cantidad_tiene_boton_actualizar_visible(client, producto):

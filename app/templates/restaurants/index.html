@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Restaurantes · QuickFood{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/catalog.css') }}">
+<section id="catalog-page" aria-labelledby="catalog-title">
+  <header class="catalog-header">
+    <p class="catalog-eyebrow">Catálogo</p>
+    <h1 id="catalog-title">Restaurantes</h1>
+    <p class="catalog-intro">Busca por nombre o por tipo de comida y elige tu menú.</p>
+  </header>
+
+  <form class="catalog-search" method="get" action="{{ url_for('restaurants.index') }}" role="search">
+    <label class="visually-hidden" for="catalog-search-input">Buscar restaurantes</label>
+    <div class="input-group">
+      <input id="catalog-search-input" class="form-control" type="search" name="q" value="{{ search }}"
+             maxlength="{{ max_search_length }}" placeholder="Ej.: sushi, carnes, saludable">
+      <button class="btn qf-btn text-white" type="submit">Buscar</button>
+    </div>
+  </form>
+
+  {% if restaurants %}
+    <div class="catalog-grid">
+      {% for restaurant in restaurants %}
+        <article class="catalog-card">
+          <img class="catalog-card-image" alt="" width="320" height="180" loading="lazy"
+               src="{{ url_for('static', filename='images/' ~ (restaurant.image or 'restaurante.svg')) }}">
+          <div class="catalog-card-body">
+            <h2>{{ restaurant.name }}</h2>
+            <p class="catalog-cuisine">{{ restaurant.cuisine }}</p>
+            <a class="btn qf-btn text-white" href="{{ url_for('restaurants.menu', restaurant_id=restaurant.id) }}"
+               aria-label="Ver menú de {{ restaurant.name }}">Ver menú</a>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="catalog-empty" role="status">
+      <p>No se encontraron restaurantes</p>
+      {% if search %}
+        <a class="catalog-back-link" href="{{ url_for('restaurants.index') }}">Ver todos los restaurantes</a>
+      {% endif %}
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

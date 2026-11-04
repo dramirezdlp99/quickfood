@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}{{ restaurant.name }} · QuickFood{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/catalog.css') }}">
+<section id="catalog-page" aria-labelledby="menu-title">
+  <a class="catalog-back-link" href="{{ url_for('restaurants.index') }}">Volver a restaurantes</a>
+  <header class="catalog-header">
+    <p class="catalog-eyebrow">{{ restaurant.cuisine }}</p>
+    <h1 id="menu-title">{{ restaurant.name }}</h1>
+  </header>
+
+  {% if products %}
+    <div class="menu-list">
+      {% for p in products %}
+        <article class="menu-item">
+          <img class="menu-item-image" alt="" width="96" height="96" loading="lazy"
+               src="{{ url_for('static', filename='images/' ~ (p.image or 'producto.svg')) }}">
+          <div class="menu-item-copy">
+            <h2>{{ p.name }}</h2>
+            {% if p.description %}<p class="menu-item-description">{{ p.description }}</p>{% endif %}
+            <p class="menu-item-price">{{ p.price|cop }}</p>
+          </div>
+          {% if endpoint_exists('cart.add') %}
+            <form class="menu-item-form js-add-to-cart" method="post" action="{{ url_for('cart.add') }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="product_id" value="{{ p.id }}">
+              <label class="visually-hidden" for="quantity-{{ p.id }}">Cantidad de {{ p.name }}</label>
+              <input id="quantity-{{ p.id }}" class="form-control menu-item-quantity" type="number" name="quantity"
+                     min="1" max="{{ max_quantity }}" value="1" required>
+              <button class="btn qf-btn text-white" type="submit" aria-label="Agregar {{ p.name }} al carrito">Agregar</button>
+            </form>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="catalog-empty" role="status">
+      <p>Este restaurante aún no tiene productos</p>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script src="{{ url_for('static', filename='js/catalog.js') }}" defer></script>
+{% endblock %}
