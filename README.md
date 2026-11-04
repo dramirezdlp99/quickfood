@@ -57,6 +57,7 @@
 9. [Tecnologías y estructura](#-tecnologías-y-estructura)
 10. [Ejecutar en local](#-ejecutar-en-local)
 11. [Cómo contribuir](#-cómo-contribuir)
+12. [Restaurantes y catálogo](#️-restaurantes-y-catálogo)
 
 ---
 
@@ -269,6 +270,42 @@ pip-audit -r requirements.txt
 - La política de seguridad (CSP) no permite `<script>` ni `style="..."` dentro del HTML: el JavaScript va en `app/static/js/` y los estilos en `app/static/css/`.
 - Las imágenes se guardan en `app/static/images/` y se cargan con `{{ url_for('static', filename='images/<archivo>') }}`; no se permiten imágenes de otros sitios.
 - El dinero se maneja en pesos enteros; en plantillas usa `{{ valor|cop }}` → `$ 12.500`.
+
+## 🍽️ Restaurantes y catálogo
+
+Módulo de Juan Felipe Mora Revelo, integrado a `develop` en el [PR #6](https://github.com/dramirezdlp99/quickfood/pull/6). Esta sección complementa las anteriores: el catálogo ya está disponible y las cifras de aquí incluyen este módulo.
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/img/catalogo.png" alt="Listado de restaurantes con buscador"><p align="center"><sub>Listado de restaurantes con búsqueda</sub></p></td>
+    <td width="50%"><img src="docs/img/menu.png" alt="Menú de un restaurante con productos, precios y botón Agregar"><p align="center"><sub>Menú con precios y botón "Agregar"</sub></p></td>
+  </tr>
+</table>
+
+| Ruta | Qué hace |
+| --- | --- |
+| `GET /restaurantes` | Lista los restaurantes por nombre |
+| `GET /restaurantes?q=sushi` | Busca por nombre o tipo de comida, sin distinguir mayúsculas |
+| `GET /restaurantes/<id>` | Muestra solo los productos de ese restaurante; responde 404 si no existe |
+
+Cada producto del menú tiene un botón "Agregar" que envía el formulario a `/carrito/agregar` con su token CSRF. El inicio también incluye un buscador que lleva al catálogo.
+
+| Decisión de seguridad | Riesgo que evita |
+| --- | --- |
+| Búsqueda con `ilike`, sin expresiones regulares, y texto recortado a 60 caracteres | ReDoS y búsquedas abusivamente largas |
+| Se escapan `%`, `_` y `\` antes de buscar | Que buscar `%` devuelva todos los restaurantes |
+| Los id fuera del rango de un entero responden 404 | Un error 500 por desbordamiento con un id gigante |
+
+**Resultados al integrar el módulo (PR #6)**
+
+| 🧪 Pruebas | 📈 Cobertura total | 📈 Código nuevo en SonarQube | 🐞 Issues nuevos | 🛡️ ZAP | 📝 Errores registrados |
+| :---: | :---: | :---: | :---: | :---: | :---: |
+| **142** (120 unitarias, 15 de integración, 7 de seguridad) | **95,80 %** | **86 %** | **0** | **0 High · 0 Medium** | **15** |
+
+**Limitaciones y pendientes**
+
+- En SQLite, ignorar mayúsculas solo funciona con letras ASCII: buscar `ÑOÑO` no encuentra `ñoño`.
+- La prueba `tests/integration/test_catalog_flow.py` recorre catálogo → menú → carrito. Se extenderá hasta confirmar el pedido cuando exista `orders.confirm`.
 
 ---
 
