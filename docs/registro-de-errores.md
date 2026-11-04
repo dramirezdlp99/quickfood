@@ -19,7 +19,7 @@ detectó **antes** de integrar el cambio, y cómo se corrigió.
 | 12 | 2026-11-03 | Ramirez | Bandit (B105) | Demo intencional: clave secreta escrita en `app/config.py`, línea 15. Las pruebas, SonarQube y ZAP pasaron; solo Bandit lo detectó | Se volvió a leer de `QUICKFOOD_SECRET_KEY` o se genera aleatoria | #3 |
 | 13 | 2026-11-03 | Ramirez | pip-audit | Demo intencional: `requests==2.31.0` con vulnerabilidades conocidas (PYSEC-2026-1872, -1873, -2275) | Actualizado a `requests==2.34.2` | #3 |
 | 14 | 2026-11-03 | Ramirez | OWASP ZAP Baseline | 2 alertas Medium (CSP con comodín en img-src y style-src 'unsafe-inline') y 2 Low (faltaban Cross-Origin-Embedder-Policy y Cross-Origin-Resource-Policy) | CSP sin comodín ni unsafe-inline; cabeceras COEP require-corp y CORP same-origin; prueba nueva en tests/unit/test_app.py | #4 |
-| 15 | 2026-11-04 | Mora | Pytest | Al integrar el catálogo fallaron 2 casos de `test_enlace_seguir_comprando_lleva_al_inicio_sin_modulo_de_restaurantes` en `tests/unit/test_cart.py`: esperaban `href="/"` porque suponían que el módulo de restaurantes no existía | La plantilla del carrito ya enlaza bien a `/restaurantes`; se ajustó solo esa prueba para esperar el nuevo enlace y se renombró a `test_enlace_seguir_comprando_lleva_al_catalogo` | pendiente |
+| 15 | 2026-11-04 | Mora | Pytest | Al integrar el catálogo fallaron 2 casos de `test_enlace_seguir_comprando_lleva_al_inicio_sin_modulo_de_restaurantes` en `tests/unit/test_cart.py`: esperaban `href="/"` porque suponían que el módulo de restaurantes no existía | La plantilla del carrito ya enlaza bien a `/restaurantes`; se ajustó solo esa prueba para esperar el nuevo enlace y se renombró a `test_enlace_seguir_comprando_lleva_al_catalogo` | #6 |
 
 ## Falsos positivos o hallazgos aceptados
 
@@ -28,3 +28,4 @@ detectó **antes** de integrar el cambio, y cómo se corrigió.
 | Consola del navegador (CSP) | La CSP bloquea los `.map` de Bootstrap desde `cdn.jsdelivr.net` | Solo ocurre con DevTools abierto y no afecta al usuario |
 | OWASP ZAP (Low) | Server Leaks Version Information: el servidor de desarrollo envía "Werkzeug/x Python/y" | La cabecera la pone el servidor de desarrollo de Flask, no la app; en producción se usaría gunicorn o nginx sin esa cabecera |
 | OWASP ZAP (10 Informational) | Login detectado, cookie de sesión firmada (Base64), cabeceras Sec-Fetch ausentes en las peticiones de ZAP, contenido cacheable | Son observaciones informativas, no vulnerabilidades |
+| OWASP ZAP (Informational) | Base64 Disclosure en `/restaurantes` y `/restaurantes?q` (PR #6) | La evidencia es el hash `sha384` del atributo `integrity` de Bootstrap en `base.html`: es un valor público para verificar el archivo, no un dato filtrado |
