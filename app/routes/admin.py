@@ -5,6 +5,7 @@ from flask import Blueprint, abort, flash, redirect, render_template, request, u
 from ..extensions import db
 from ..models import Order
 from ..services.auth_service import admin_required
+from ..services.cart_service import MAX_DB_ID
 
 bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -23,21 +24,25 @@ def orders():
     )
 
 
+def _get_order_or_404(order_id: int) -> Order:
+    """Busca el pedido; un id fuera de rango o inexistente responde 404 (no 500)."""
+    order = db.session.get(Order, order_id) if 1 <= order_id <= MAX_DB_ID else None
+    if order is None:
+        abort(404)
+    return order
+
+
 @bp.get("/pedidos/<int:order_id>")
 @admin_required
 def order_detail(order_id: int):
-    order = db.session.get(Order, order_id)
-    if order is None:
-        abort(404)
+    order = _get_order_or_404(order_id)
     return render_template("admin/order_detail.html", order=order, statuses=Order.STATUSES)
 
 
 @bp.post("/pedidos/<int:order_id>/estado")
 @admin_required
 def update_status(order_id: int):
-    order = db.session.get(Order, order_id)
-    if order is None:
-        abort(404)
+    order = _get_order_or_404(order_id)
 
     new_status = request.form.get("status", "")
     if new_status not in Order.STATUSES:

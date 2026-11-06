@@ -10,7 +10,7 @@ from ..extensions import db
 from ..models import Product
 
 MAX_QUANTITY = 20
-MAX_PRODUCT_ID = 2**31 - 1  # límite de INTEGER en SQLite/PostgreSQL
+MAX_DB_ID = 2**31 - 1  # mayor id válido (INTEGER de 32 bits); un número mayor causa OverflowError
 QUANTITY_ERROR = f"La cantidad debe ser un número entero entre 1 y {MAX_QUANTITY}."
 LIMIT_ERROR = f"Puedes tener máximo {MAX_QUANTITY} unidades de cada producto."
 INVALID_PRODUCT_ERROR = "El producto seleccionado no es válido."
@@ -133,6 +133,10 @@ class CartService:
         self.storage.write(cart)
         return True
 
+    def clear(self) -> None:
+        """Vacía el carrito (por ejemplo, al confirmar el pedido)."""
+        self.storage.write({})
+
     def summary(self) -> CartSummary:
         """Calcula subtotales y total usando productos persistidos."""
         cart = self.storage.read()
@@ -162,7 +166,7 @@ class CartService:
             product_id = int(value)
         except (TypeError, ValueError) as error:
             raise InvalidProductIdError(INVALID_PRODUCT_ERROR) from error
-        if not 1 <= product_id <= MAX_PRODUCT_ID:
+        if not 1 <= product_id <= MAX_DB_ID:
             raise InvalidProductIdError(INVALID_PRODUCT_ERROR)
         return product_id
 

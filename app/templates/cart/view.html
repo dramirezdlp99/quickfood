@@ -88,16 +88,9 @@
           <strong>{{ summary.total|cop }}</strong>
         </div>
 
-        {% if endpoint_exists('orders.confirm') %}
-          <form method="post" action="{{ url_for('orders.confirm') }}" class="cart-form">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button class="btn qf-btn cart-confirm-button" type="submit">Confirmar pedido</button>
-          </form>
-        {% else %}
-          <p class="cart-coming-soon">La confirmación estará disponible pronto.</p>
-        {% endif %}
-
+        <a class="btn qf-btn cart-confirm-button" href="{{ url_for('orders.confirm_form') }}">Confirmar pedido</a>
         <a class="cart-continue-link" href="{{ shop_url }}">Seguir comprando</a>
+        <a class="cart-continue-link" href="{{ url_for('orders.index') }}">Mis pedidos</a>
       </aside>
     </div>
   {% else %}
