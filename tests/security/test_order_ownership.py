@@ -45,3 +45,14 @@ def test_pedido_inexistente_o_id_gigante_responde_404_sin_error_500(client, logi
     login("laura@test.com")
 
     assert client.get(f"/pedidos/{order_id}").status_code == 404
+
+
+@pytest.mark.parametrize("method, url", [("get", "/admin/pedidos/{id}"), ("post", "/admin/pedidos/{id}/estado")])
+@pytest.mark.parametrize("order_id", ["0", "1" + "0" * 25])
+def test_admin_con_id_fuera_de_rango_responde_404_sin_error_500(client, make_user, login, method, url, order_id):
+    make_user(email="admin@test.com", role="admin", name="Admin")
+    login("admin@test.com")
+
+    response = getattr(client, method)(url.format(id=order_id), data={"status": "preparando"})
+
+    assert response.status_code == 404
