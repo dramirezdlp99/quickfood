@@ -133,6 +133,10 @@ class CartService:
         self.storage.write(cart)
         return True
 
+    def clear(self) -> None:
+        """Vacía el carrito (por ejemplo, al confirmar el pedido)."""
+        self.storage.write({})
+
     def summary(self) -> CartSummary:
         """Calcula subtotales y total usando productos persistidos."""
         cart = self.storage.read()

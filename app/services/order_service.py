@@ -5,8 +5,21 @@ import secrets
 from typing import Any
 
 from flask import session as flask_session
+from sqlalchemy.exc import SQLAlchemyError
+
+from ..extensions import db
+from ..models import Order, OrderItem
+from .cart_service import CartService
 
 CHECKOUT_REJECTED_MESSAGE = "La confirmación no es válida o ya se usó."
+
+
+class EmptyCartError(ValueError):
+    """No se puede confirmar un carrito sin productos."""
+
+
+class PriceChangedError(ValueError):
+    """El total cambió desde que el usuario vio el resumen."""
 
 
 class InvalidCheckoutTokenError(ValueError):
@@ -38,3 +51,35 @@ class CheckoutToken:
         if not hmac.compare_digest(token.encode(), submitted.encode()):
             raise InvalidCheckoutTokenError(CHECKOUT_REJECTED_MESSAGE)
         return total
+
+
+class OrderPlacer:
+    """Crea el pedido desde el carrito en una sola transacción."""
+
+    def __init__(self, cart: CartService) -> None:
+        self.cart = cart
+
+    def place(self, user_id: int, expected_total: int) -> Order:
+        """Guarda el pedido con precios de la BD y vacía el carrito solo si se guardó."""
+        summary = self.cart.summary()
+        if not summary.lines:
+            raise EmptyCartError("Tu carrito está vacío.")
+        if summary.total != expected_total:
+            raise PriceChangedError("Los precios cambiaron; revisa el nuevo total.")
+
+        order = Order(
+            user_id=user_id,
+            total=summary.total,
+            items=[
+                OrderItem(product=line.product, quantity=line.quantity, unit_price=line.product.price)
+                for line in summary.lines
+            ],
+        )
+        db.session.add(order)
+        try:
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            raise
+        self.cart.clear()
+        return order
