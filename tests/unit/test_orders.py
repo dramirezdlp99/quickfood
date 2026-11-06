@@ -327,3 +327,22 @@ def test_caso7_detecta_cambios_de_precio_aunque_el_total_no_cambie(cart, custome
     with pytest.raises(PriceChangedError):
         OrderPlacer(cart).place(customer.id, expected)
     assert Order.query.count() == 0
+
+
+def test_token_reemplazado_por_otra_pestania_vuelve_al_resumen_con_aviso_claro(client, logged_in, products):
+    burger, _ = products
+    _add(client, burger.id)
+    first_tab = _checkout_token(client)
+    _checkout_token(client)  # el usuario abre el resumen en otra pestaña
+
+    response = client.post("/pedidos/confirmar", data={"checkout_token": first_tab})
+
+    assert response.headers["Location"].endswith("/pedidos/confirmar")
+    assert "La confirmación expiró o ya se usó" in client.get(response.headers["Location"]).get_data(as_text=True)
+    assert Order.query.count() == 0
+
+
+def test_token_invalido_sin_carrito_lleva_a_mis_pedidos(client, logged_in):
+    response = client.post("/pedidos/confirmar", data={"checkout_token": "viejo"})
+
+    assert response.headers["Location"].endswith("/pedidos")

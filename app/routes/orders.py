@@ -44,8 +44,10 @@ def confirm():
         expected = CheckoutToken().consume(request.form.get("checkout_token"))
         order = OrderPlacer(_cart()).place(g.user.id, expected)
     except InvalidCheckoutTokenError as error:
+        # Si aún hay carrito (p. ej. se abrió el resumen en otra pestaña), vuelve al resumen.
         flash(str(error), "warning")
-        return redirect(url_for("orders.index"))
+        has_cart = bool(_cart().storage.read())
+        return redirect(url_for("orders.confirm_form" if has_cart else "orders.index"))
     except EmptyCartError:
         flash(EMPTY_CART_MESSAGE, "warning")
         return redirect(url_for("cart.view"))

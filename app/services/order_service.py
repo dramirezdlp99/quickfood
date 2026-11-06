@@ -12,7 +12,7 @@ from ..extensions import db
 from ..models import Order, OrderItem, Product
 from .cart_service import MAX_DB_ID, CartService, CartSummary
 
-CHECKOUT_REJECTED_MESSAGE = "La confirmación no es válida o ya se usó."
+CHECKOUT_REJECTED_MESSAGE = "La confirmación expiró o ya se usó. Revisa el resumen y confirma de nuevo."
 
 
 class EmptyCartError(ValueError):
