@@ -9,6 +9,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from ..extensions import db
 from ..models import Order, OrderItem
+from .cart_service import MAX_PRODUCT_ID as MAX_DB_ID
 from .cart_service import CartService
 
 CHECKOUT_REJECTED_MESSAGE = "La confirmación no es válida o ya se usó."
@@ -83,3 +84,23 @@ class OrderPlacer:
             raise
         self.cart.clear()
         return order
+
+
+class OrderQueries:
+    """Consulta pedidos siempre filtrando por su dueño."""
+
+    @staticmethod
+    def list_for_user(user_id: int) -> list[Order]:
+        """Pedidos del usuario, del más reciente al más antiguo."""
+        return (
+            Order.query.filter_by(user_id=user_id)
+            .order_by(Order.created_at.desc(), Order.id.desc())
+            .all()
+        )
+
+    @staticmethod
+    def get_for_user(order_id: int, user_id: int) -> Order | None:
+        """El pedido solo si pertenece al usuario; si no, None (la ruta responde 404)."""
+        if not 1 <= order_id <= MAX_DB_ID:
+            return None  # un id gigante causaría OverflowError (500) en la BD
+        return Order.query.filter_by(id=order_id, user_id=user_id).first()

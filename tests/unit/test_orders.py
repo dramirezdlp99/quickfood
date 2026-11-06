@@ -12,6 +12,7 @@ from app.services.order_service import (
     EmptyCartError,
     InvalidCheckoutTokenError,
     OrderPlacer,
+    OrderQueries,
     PriceChangedError,
 )
 
@@ -145,3 +146,27 @@ def test_si_falla_la_base_de_datos_no_queda_pedido_y_se_conserva_el_carrito(
 
     assert Order.query.count() == 0
     assert cart.storage.read() == {burger.id: 1}
+
+
+def test_lista_solo_los_pedidos_del_usuario_del_mas_reciente_al_mas_antiguo(make_user, make_order):
+    laura = make_user(email="laura@test.com", name="Laura")
+    pedro = make_user(email="pedro@test.com", name="Pedro")
+    first = make_order(laura)
+    make_order(pedro)
+    second = make_order(laura)
+
+    assert OrderQueries.list_for_user(laura.id) == [second, first]
+
+
+def test_obtiene_el_pedido_solo_si_es_del_usuario(make_user, make_order):
+    laura = make_user(email="laura@test.com", name="Laura")
+    pedro = make_user(email="pedro@test.com", name="Pedro")
+    order = make_order(laura)
+
+    assert OrderQueries.get_for_user(order.id, laura.id) == order
+    assert OrderQueries.get_for_user(order.id, pedro.id) is None
+
+
+@pytest.mark.parametrize("order_id", [999999, 0, -1, 2**31, 10**25])
+def test_pedido_inexistente_o_fuera_de_rango_devuelve_none(customer, order_id):
+    assert OrderQueries.get_for_user(order_id, customer.id) is None
