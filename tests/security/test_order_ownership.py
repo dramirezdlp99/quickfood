@@ -56,3 +56,12 @@ def test_admin_con_id_fuera_de_rango_responde_404_sin_error_500(client, make_use
     response = getattr(client, method)(url.format(id=order_id), data={"status": "preparando"})
 
     assert response.status_code == 404
+
+
+def test_menu_superior_muestra_mis_pedidos_solo_con_sesion(client, make_user, login):
+    make_user(email="laura@test.com", name="Laura")
+    menu_link = r'<a class="nav-link" href="/pedidos">Mis pedidos</a>'
+
+    assert menu_link not in client.get("/").get_data(as_text=True)
+    login("laura@test.com")
+    assert menu_link in client.get("/").get_data(as_text=True)
