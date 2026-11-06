@@ -11,6 +11,7 @@ from ..services.order_service import (
     OrderPlacer,
     OrderQueries,
     PriceChangedError,
+    checkout_fingerprint,
 )
 
 bp = Blueprint("orders", __name__, url_prefix="/pedidos")
@@ -31,17 +32,17 @@ def confirm_form():
     if not summary.lines:
         flash(EMPTY_CART_MESSAGE, "warning")
         return redirect(url_for("cart.view"))
-    token = CheckoutToken().issue(summary.total)
+    token = CheckoutToken().issue(checkout_fingerprint(summary))
     return render_template("orders/confirm.html", summary=summary, checkout_token=token)
 
 
 @bp.post("/confirmar")
 @login_required
 def confirm():
-    """Crea el pedido si el token es válido y el total no cambió."""
+    """Crea el pedido si el token es válido y los precios no cambiaron."""
     try:
-        expected_total = CheckoutToken().consume(request.form.get("checkout_token"))
-        order = OrderPlacer(_cart()).place(g.user.id, expected_total)
+        expected = CheckoutToken().consume(request.form.get("checkout_token"))
+        order = OrderPlacer(_cart()).place(g.user.id, expected)
     except InvalidCheckoutTokenError as error:
         flash(str(error), "warning")
         return redirect(url_for("orders.index"))

@@ -10,7 +10,7 @@ from sqlalchemy.orm import selectinload
 
 from ..extensions import db
 from ..models import Order, OrderItem, Product
-from .cart_service import MAX_DB_ID, CartService
+from .cart_service import MAX_DB_ID, CartService, CartSummary
 
 CHECKOUT_REJECTED_MESSAGE = "La confirmación no es válida o ya se usó."
 
@@ -35,23 +35,31 @@ class CheckoutToken:
     def __init__(self, storage: Any | None = None) -> None:
         self._session = storage if storage is not None else flask_session
 
-    def issue(self, total: int) -> str:
-        """Genera un token nuevo y recuerda el total que vio el usuario."""
+    def issue(self, expected: Any) -> str:
+        """Genera un token nuevo y recuerda lo que vio el usuario (la huella del resumen)."""
         token = secrets.token_urlsafe(32)
-        self._session[self.KEY] = {"token": token, "total": total}
+        self._session[self.KEY] = {"token": token, "expected": expected}
         return token
 
-    def consume(self, submitted: Any) -> int:
-        """Devuelve el total esperado; el token se descarta siempre, sea válido o no."""
+    def consume(self, submitted: Any) -> Any:
+        """Devuelve la huella esperada; el token se descarta siempre, sea válido o no."""
         stored = self._session.pop(self.KEY, None)
         if not isinstance(stored, dict) or not isinstance(submitted, str):
             raise InvalidCheckoutTokenError(CHECKOUT_REJECTED_MESSAGE)
-        token, total = stored.get("token"), stored.get("total")
-        if not isinstance(token, str) or not isinstance(total, int):
+        token, expected = stored.get("token"), stored.get("expected")
+        if not isinstance(token, str) or expected is None:
             raise InvalidCheckoutTokenError(CHECKOUT_REJECTED_MESSAGE)
         if not hmac.compare_digest(token.encode(), submitted.encode()):
             raise InvalidCheckoutTokenError(CHECKOUT_REJECTED_MESSAGE)
-        return total
+        return expected
+
+
+def checkout_fingerprint(summary: CartSummary) -> list[list[int]]:
+    """Lo que el usuario vio en el resumen: [id, cantidad, precio] de cada línea.
+
+    Comparar solo el total no detecta un precio que sube y otro que baja lo mismo.
+    """
+    return sorted([line.product.id, line.quantity, line.product.price] for line in summary.lines)
 
 
 class OrderPlacer:
@@ -60,12 +68,12 @@ class OrderPlacer:
     def __init__(self, cart: CartService) -> None:
         self.cart = cart
 
-    def place(self, user_id: int, expected_total: int) -> Order:
+    def place(self, user_id: int, expected: list[list[int]]) -> Order:
         """Guarda el pedido con precios de la BD y vacía el carrito solo si se guardó."""
         summary = self.cart.summary()
         if not summary.lines:
             raise EmptyCartError("Tu carrito está vacío.")
-        if summary.total != expected_total:
+        if checkout_fingerprint(summary) != expected:
             raise PriceChangedError("Los precios cambiaron; revisa el nuevo total.")
 
         order = Order(
