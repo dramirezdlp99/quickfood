@@ -128,3 +128,37 @@ def test_cliente_no_puede_cambiar_el_estado_de_su_propio_pedido(app, users, roll
     assert response.status_code == 403
     db.session.expire_all()
     assert db.session.get(Order, order_id).status == "pendiente"
+
+
+def test_visitante_arma_el_carrito_inicia_sesion_y_confirma_sin_perderlo(app, users, roll):
+    """Error de integración: log_in() hacía session.clear() y borraba el carrito."""
+    client = app.test_client()
+    menu = _page(client, f"/restaurantes/{roll.restaurant_id}")
+    client.post("/carrito/agregar", data={"csrf_token": _token(menu), "product_id": roll.id, "quantity": "2"})
+
+    response = client.get("/pedidos/confirmar")
+    assert "/auth/ingresar?next=/pedidos/confirmar" in response.headers["Location"]
+    login = _page(client, response.headers["Location"])
+    response = client.post(
+        "/auth/ingresar",
+        data={"csrf_token": _token(login), "email": "laura@test.com", "password": PASSWORD, "next": "/pedidos/confirmar"},
+    )
+
+    assert response.headers["Location"].endswith("/pedidos/confirmar")
+    assert "$ 56.000" in client.get("/pedidos/confirmar").get_data(as_text=True)
+
+
+def test_iniciar_sesion_solo_conserva_el_carrito_y_limpia_lo_demas(app, users, roll):
+    """La fijación de sesión sigue cubierta: cualquier otra clave previa se descarta."""
+    client = app.test_client()
+    with client.session_transaction() as session:
+        session["cart"] = {str(roll.id): 1}
+        session["user_id"] = 999
+        session["otra_clave"] = "valor del visitante"
+
+    _log_in(client, "laura@test.com")
+
+    with client.session_transaction() as session:
+        assert session["cart"] == {str(roll.id): 1}
+        assert session["user_id"] != 999
+        assert "otra_clave" not in session

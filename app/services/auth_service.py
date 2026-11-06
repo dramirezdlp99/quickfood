@@ -59,7 +59,10 @@ def authenticate(email: str, password: str) -> User | None:
 
 
 def log_in(user: User) -> None:
+    cart = session.get("cart")  # el carrito del visitante no debe perderse al iniciar sesión
     session.clear()  # evita reutilizar una sesión anterior (fijación de sesión)
+    if cart:
+        session["cart"] = cart
     session["user_id"] = user.id
 
 
