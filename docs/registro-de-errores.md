@@ -28,6 +28,7 @@ detectó **antes** de integrar el cambio, y cómo se corrigió.
 | 21 | 2026-11-06 | Daniers | Revisión de código | El cambio de precio se detectaba solo por el total: si un precio subía y otro bajaba lo mismo, se creaba el pedido sin avisar | El token guarda la huella `[id, cantidad, precio]` de cada línea; prueba con total igual y precios distintos (`5736174`) | #pendiente |
 | 22 | 2026-11-06 | Daniers | Revisión de código | Abrir el resumen en otra pestaña invalidaba el token de la primera y el aviso decía "ya se usó" | Aviso "expiró o ya se usó" y vuelta al resumen si aún hay carrito (`99d5241`) | #pendiente |
 | 23 | 2026-11-06 | Daniers | Revisión de código | Las fechas de los pedidos se mostraban en UTC (5 horas de más para Colombia) | Filtro `colombia_time` registrado desde el blueprint con `timezone(timedelta(hours=-5))`, sin dependencias (`9f30bdb`) | #pendiente |
+| 24 | 2026-11-06 | Daniers | Prueba manual en el navegador | No había forma de llegar a "Mis pedidos" desde el menú superior: solo aparecía en el resumen del carrito con productos; con el carrito vacío el usuario no podía ver sus pedidos | Se agregó "Mis pedidos" al menú de `base.html` solo para usuarios con sesión, con prueba (`00cb2e4`, autorizado por Ramirez) | #pendiente |
 
 ## Falsos positivos o hallazgos aceptados
 
