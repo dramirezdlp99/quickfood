@@ -79,7 +79,7 @@
 | Usuarios | Roles cliente y administrador, rutas protegidas | ✅ Integrado |
 | Administración | Lista de pedidos con filtro por estado, detalle y cambio de estado (pendiente → preparando → entregado) | ✅ Integrado |
 | Carrito | Agregar, cambiar cantidades (1 a 20) y eliminar productos; totales calculados en el servidor con los precios de la base de datos | ✅ Integrado |
-| Pedidos | Confirmar el carrito y guardar el pedido | 🚧 En desarrollo |
+| Pedidos | Confirmar el carrito con token de un solo uso y total calculado en el servidor; "Mis pedidos" y detalle con su estado | ✅ Integrado |
 | Catálogo | Listado de restaurantes, menús y búsqueda | 🚧 En desarrollo |
 
 <table>
@@ -305,7 +305,7 @@ Cada producto del menú tiene un botón "Agregar" que envía el formulario a `/c
 **Limitaciones y pendientes**
 
 - En SQLite, ignorar mayúsculas solo funciona con letras ASCII: buscar `ÑOÑO` no encuentra `ñoño`.
-- La prueba `tests/integration/test_catalog_flow.py` recorre catálogo → menú → carrito. Se extenderá hasta confirmar el pedido cuando exista `orders.confirm`.
+- La prueba `tests/integration/test_catalog_flow.py` recorre catálogo → menú → carrito; el recorrido completo hasta confirmar el pedido, "Mis pedidos" y el cambio de estado desde el panel está en `tests/integration/test_checkout_flow.py`.
 
 ---
 
