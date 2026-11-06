@@ -1,6 +1,7 @@
 """Pruebas del servicio y las rutas de pedidos (casos 6 a 9 de la sección 9.2)."""
 
 import re
+from pathlib import Path
 
 import pytest
 from flask import session as request_session
@@ -266,3 +267,49 @@ def test_caso9_doble_envio_de_la_confirmacion_no_duplica_el_pedido(client, logge
 def test_mis_pedidos_vacio_muestra_mensaje(client, logged_in):
     html = client.get("/pedidos").get_data(as_text=True)
     assert "Aún no tienes pedidos" in html
+
+
+# --- Plantillas y estilos ----------------------------------------------------
+
+STATIC = Path(__file__).parents[2] / "app" / "static"
+
+
+def test_carrito_lleva_al_resumen_por_get_y_enlaza_mis_pedidos(client, logged_in, products):
+    burger, _ = products
+    _add(client, burger.id)
+    html = client.get("/carrito").get_data(as_text=True)
+
+    assert re.search(r'<a[^>]*href="/pedidos/confirmar"[^>]*>\s*Confirmar pedido', html)
+    assert 'action="/pedidos/confirmar"' not in html
+    assert re.search(r'<a[^>]*href="/pedidos"[^>]*>\s*Mis pedidos', html)
+
+
+@pytest.mark.parametrize("url", ["/pedidos", "/pedidos/confirmar", "/pedidos/{id}"])
+def test_paginas_de_pedidos_usan_orders_css_sin_estilos_en_linea(client, logged_in, products, url):
+    burger, _ = products
+    _add(client, burger.id)
+    client.post("/pedidos/confirmar", data={"checkout_token": _checkout_token(client)})
+    _add(client, burger.id)
+    html = client.get(url.format(id=Order.query.one().id)).get_data(as_text=True)
+
+    assert 'href="/static/css/orders.css"' in html
+    assert 'id="orders-page"' in html
+    assert " style=" not in html  # la CSP no permite estilos en línea
+
+
+def test_orders_css_existe_y_solo_aplica_dentro_de_orders_page():
+    css = (STATIC / "css" / "orders.css").read_text(encoding="utf-8")
+    css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    # Cada regla termina en "{": el selector es lo que hay entre el "{" o "}" anterior y ese "{".
+    selectors = [s.strip() for s in re.findall(r"(?:^|(?<=[{}]))([^{}]+)\{", css) if not s.strip().startswith("@")]
+
+    assert len(selectors) > 5
+    for selector in selectors:
+        for part in selector.split(","):
+            assert part.strip().startswith("#orders-page"), part
+
+
+def test_doble_clic_en_confirmar_desactiva_el_boton():
+    script = (STATIC / "js" / "cart.js").read_text(encoding="utf-8")
+
+    assert "#orders-page form" in script

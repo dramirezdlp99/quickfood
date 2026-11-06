@@ -45,7 +45,6 @@
 .summary-total { align-items: center; margin: 1.25rem 0 1.35rem; padding-top: 1rem; border-top: 1px solid var(--cart-border); color: var(--qf-dark); font-weight: 700; }
 .summary-total strong { color: var(--qf-primary); font-size: 1.65rem; }
 .cart-confirm-button { width: 100%; padding: .8rem 1rem; font-weight: 700; }
-.cart-coming-soon { margin: 0; padding: .8rem; border-radius: .7rem; background: #fff8f3; color: var(--cart-muted); font-size: .88rem; text-align: center; }
 .cart-continue-link { display: block; margin-top: 1rem; color: var(--qf-primary-dark); font-size: .92rem; font-weight: 600; text-align: center; text-decoration: none; }
 .cart-continue-link:hover { text-decoration: underline; }
 
