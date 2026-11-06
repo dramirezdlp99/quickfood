@@ -1,5 +1,7 @@
 """Rutas de confirmación y consulta de pedidos del cliente."""
 
+from datetime import datetime, timedelta, timezone
+
 from flask import Blueprint, abort, flash, g, redirect, render_template, request, url_for
 
 from ..services.auth_service import login_required
@@ -17,6 +19,18 @@ from ..services.order_service import (
 bp = Blueprint("orders", __name__, url_prefix="/pedidos")
 
 EMPTY_CART_MESSAGE = "Tu carrito está vacío; agrega productos antes de confirmar."
+COLOMBIA_TZ = timezone(timedelta(hours=-5), "COT")  # Colombia no tiene horario de verano
+
+
+@bp.app_template_filter("colombia_time")
+def format_colombia_time(value: datetime) -> str:
+    """Fecha y hora de Colombia, p. ej. 06/11/2026 2:45 p. m. (la BD guarda UTC)."""
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)  # SQLite devuelve la fecha sin zona
+    local = value.astimezone(COLOMBIA_TZ)
+    hour = local.hour % 12 or 12
+    period = "a. m." if local.hour < 12 else "p. m."
+    return f"{local:%d/%m/%Y} {hour}:{local:%M} {period}"
 
 
 def _cart() -> CartService:

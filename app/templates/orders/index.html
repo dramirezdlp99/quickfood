@@ -28,7 +28,7 @@
             {% for order in orders %}
               <tr>
                 <th scope="row">#{{ order.id }}</th>
-                <td>{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>{{ order.created_at|colombia_time }}</td>
                 <td class="orders-num">{{ order.items|sum(attribute='quantity') }}</td>
                 <td class="orders-num orders-strong">{{ order.total|cop }}</td>
                 <td><span class="badge qf-status qf-status-{{ order.status }}">{{ order.status }}</span></td>

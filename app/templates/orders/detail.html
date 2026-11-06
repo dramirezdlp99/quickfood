@@ -7,7 +7,7 @@
     <div>
       <p class="orders-eyebrow">Detalle</p>
       <h1 id="orders-title">Pedido #{{ order.id }}</h1>
-      <p class="orders-intro">Confirmado el {{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+      <p class="orders-intro">Confirmado el {{ order.created_at|colombia_time }}</p>
     </div>
     <p class="orders-status">
       <span class="visually-hidden">Estado:</span>

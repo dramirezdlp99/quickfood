@@ -1,6 +1,7 @@
 """Pruebas del servicio y las rutas de pedidos (casos 6 a 9 de la sección 9.2)."""
 
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -9,6 +10,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.extensions import db
 from app.models import Order, Product, Restaurant
+from app.routes.orders import format_colombia_time
 from app.services.cart_service import CartService, CartStorage
 from app.services.order_service import (
     CheckoutToken,
@@ -346,3 +348,32 @@ def test_token_invalido_sin_carrito_lleva_a_mis_pedidos(client, logged_in):
     response = client.post("/pedidos/confirmar", data={"checkout_token": "viejo"})
 
     assert response.headers["Location"].endswith("/pedidos")
+
+
+# --- Hora de Colombia (UTC-5, sin horario de verano) -------------------------
+
+
+@pytest.mark.parametrize(
+    "utc, expected",
+    [
+        (datetime(2026, 11, 6, 19, 45, tzinfo=timezone.utc), "06/11/2026 2:45 p. m."),
+        (datetime(2026, 11, 7, 3, 10), "06/11/2026 10:10 p. m."),  # SQLite devuelve UTC sin zona
+        (datetime(2026, 11, 6, 5, 0, tzinfo=timezone.utc), "06/11/2026 12:00 a. m."),
+        (datetime(2026, 11, 6, 17, 0, tzinfo=timezone.utc), "06/11/2026 12:00 p. m."),
+        (datetime(2026, 11, 6, 14, 5, tzinfo=timezone.utc), "06/11/2026 9:05 a. m."),
+    ],
+)
+def test_filtro_muestra_la_hora_de_colombia(utc, expected):
+    assert format_colombia_time(utc) == expected
+
+
+@pytest.mark.parametrize("url", ["/pedidos", "/pedidos/{id}"])
+def test_pedidos_muestran_la_fecha_en_hora_de_colombia(client, logged_in, make_order, url):
+    order = make_order(logged_in)
+    order.created_at = datetime(2026, 11, 6, 19, 45, tzinfo=timezone.utc)
+    db.session.commit()
+
+    html = client.get(url.format(id=order.id)).get_data(as_text=True)
+
+    assert "06/11/2026 2:45 p. m." in html
+    assert "2026-11-06 19:45" not in html
