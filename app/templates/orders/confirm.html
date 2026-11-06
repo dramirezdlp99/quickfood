@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Confirmar pedido · QuickFood{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/orders.css') }}">
+<section id="orders-page" aria-labelledby="orders-title">
+  <header class="orders-header">
+    <p class="orders-eyebrow">Último paso</p>
+    <h1 id="orders-title">Confirma tu pedido</h1>
+    <p class="orders-intro">El total se calcula en el servidor con los precios actuales del menú.</p>
+  </header>
+
+  <div class="orders-layout">
+    <div class="orders-card">
+      <div class="orders-table-wrap">
+        <table class="orders-table">
+          <caption class="visually-hidden">Productos del pedido</caption>
+          <thead>
+            <tr>
+              <th scope="col">Producto</th>
+              <th scope="col" class="orders-num">Cantidad</th>
+              <th scope="col" class="orders-num">Precio unitario</th>
+              <th scope="col" class="orders-num">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for line in summary.lines %}
+              <tr>
+                <th scope="row">
+                  {{ line.product.name }}
+                  <span class="orders-muted">{{ line.product.restaurant.name }}</span>
+                </th>
+                <td class="orders-num">{{ line.quantity }}</td>
+                <td class="orders-num">{{ line.product.price|cop }}</td>
+                <td class="orders-num orders-strong">{{ line.subtotal|cop }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <aside class="orders-summary-card" aria-labelledby="orders-summary-title">
+      <h2 id="orders-summary-title">Resumen</h2>
+      <div class="orders-row">
+        <span>Productos</span>
+        <span>{{ summary.lines|sum(attribute='quantity') }}</span>
+      </div>
+      <div class="orders-total">
+        <span>Total</span>
+        <strong>{{ summary.total|cop }}</strong>
+      </div>
+      <form method="post" action="{{ url_for('orders.confirm') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="checkout_token" value="{{ checkout_token }}">
+        <button class="btn qf-btn orders-primary-button" type="submit">Confirmar pedido</button>
+      </form>
+      <a class="orders-link" href="{{ url_for('cart.view') }}">Volver al carrito</a>
+    </aside>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script src="{{ url_for('static', filename='js/cart.js') }}" defer></script>
+{% endblock %}

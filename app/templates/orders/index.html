@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Mis pedidos · QuickFood{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/orders.css') }}">
+<section id="orders-page" aria-labelledby="orders-title">
+  {% if orders %}
+    <header class="orders-header">
+      <p class="orders-eyebrow">Tu historial</p>
+      <h1 id="orders-title">Mis pedidos</h1>
+      <p class="orders-intro">Consulta el estado de cada pedido que has confirmado.</p>
+    </header>
+
+    <div class="orders-card">
+      <div class="orders-table-wrap">
+        <table class="orders-table">
+          <caption class="visually-hidden">Pedidos confirmados</caption>
+          <thead>
+            <tr>
+              <th scope="col">Pedido</th>
+              <th scope="col">Fecha</th>
+              <th scope="col" class="orders-num">Productos</th>
+              <th scope="col" class="orders-num">Total</th>
+              <th scope="col">Estado</th>
+              <th scope="col"><span class="visually-hidden">Acciones</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for order in orders %}
+              <tr>
+                <th scope="row">#{{ order.id }}</th>
+                <td>{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td class="orders-num">{{ order.items|sum(attribute='quantity') }}</td>
+                <td class="orders-num orders-strong">{{ order.total|cop }}</td>
+                <td><span class="badge qf-status qf-status-{{ order.status }}">{{ order.status }}</span></td>
+                <td class="orders-num">
+                  <a class="orders-detail-link" href="{{ url_for('orders.detail', order_id=order.id) }}"
+                     aria-label="Ver detalle del pedido #{{ order.id }}">Ver detalle</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% else %}
+    <div class="orders-empty-card">
+      <h1 id="orders-title">Aún no tienes pedidos</h1>
+      <p>Cuando confirmes tu carrito, tus pedidos aparecerán aquí con su estado.</p>
+      <a class="btn qf-btn" href="{{ url_for('restaurants.index') }}">Explorar restaurantes</a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

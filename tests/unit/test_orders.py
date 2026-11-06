@@ -1,4 +1,6 @@
-"""Pruebas del servicio de pedidos (casos 6 a 9 de la sección 9.2)."""
+"""Pruebas del servicio y las rutas de pedidos (casos 6 a 9 de la sección 9.2)."""
+
+import re
 
 import pytest
 from flask import session as request_session
@@ -170,3 +172,97 @@ def test_obtiene_el_pedido_solo_si_es_del_usuario(make_user, make_order):
 @pytest.mark.parametrize("order_id", [999999, 0, -1, 2**31, 10**25])
 def test_pedido_inexistente_o_fuera_de_rango_devuelve_none(customer, order_id):
     assert OrderQueries.get_for_user(order_id, customer.id) is None
+
+
+
+# --- Rutas (con sesión iniciada) ---------------------------------------------
+
+
+@pytest.fixture()
+def logged_in(customer, login):
+    login("laura@test.com")
+    return customer
+
+
+def _add(client, product_id, quantity=1):
+    client.post("/carrito/agregar", data={"product_id": product_id, "quantity": quantity})
+
+
+def _checkout_token(client):
+    html = client.get("/pedidos/confirmar").get_data(as_text=True)
+    return re.search(r'name="checkout_token" value="([^"]+)"', html).group(1)
+
+
+def test_caso6_ruta_confirmar_con_carrito_vacio_vuelve_al_carrito(client, logged_in):
+    response = client.get("/pedidos/confirmar")
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/carrito")
+
+    client.post("/pedidos/confirmar", data={"checkout_token": "inventado"})
+    assert Order.query.count() == 0
+
+
+def test_caso6_si_el_carrito_se_vacia_tras_el_resumen_no_se_crea_pedido(client, logged_in, products):
+    burger, _ = products
+    _add(client, burger.id)
+    token = _checkout_token(client)
+    client.post("/carrito/eliminar", data={"product_id": burger.id})
+
+    response = client.post("/pedidos/confirmar", data={"checkout_token": token}, follow_redirects=True)
+
+    assert "Tu carrito está vacío" in response.get_data(as_text=True)
+    assert Order.query.count() == 0
+
+
+def test_caso7_ruta_avisa_si_el_precio_cambio_y_muestra_el_nuevo_total(client, logged_in, products):
+    burger, _ = products
+    _add(client, burger.id, 2)
+    token = _checkout_token(client)
+    burger.price = 15000
+    db.session.commit()
+
+    response = client.post("/pedidos/confirmar", data={"checkout_token": token}, follow_redirects=True)
+
+    html = response.get_data(as_text=True)
+    assert "Los precios cambiaron" in html
+    assert "$ 30.000" in html
+    assert Order.query.count() == 0
+
+
+def test_caso8_confirmar_guarda_el_pedido_y_se_puede_consultar(client, logged_in, products):
+    burger, soda = products
+    _add(client, burger.id, 2)
+    _add(client, soda.id, 1)
+
+    response = client.post("/pedidos/confirmar", data={"checkout_token": _checkout_token(client)})
+
+    order = Order.query.one()
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith(f"/pedidos/{order.id}")
+    detail = client.get(f"/pedidos/{order.id}").get_data(as_text=True)
+    assert f"Pedido #{order.id}" in detail
+    assert "Hamburguesa" in detail
+    assert "$ 29.000" in detail
+    assert "pendiente" in detail
+    assert f"/pedidos/{order.id}" in client.get("/pedidos").get_data(as_text=True)
+    with client.session_transaction() as session:
+        assert session.get("cart") == {}
+
+
+def test_caso9_doble_envio_de_la_confirmacion_no_duplica_el_pedido(client, logged_in, products):
+    burger, _ = products
+    _add(client, burger.id)
+    token = _checkout_token(client)
+
+    first = client.post("/pedidos/confirmar", data={"checkout_token": token})
+    _add(client, burger.id)  # aunque vuelva a haber productos, el token ya se usó
+    second = client.post("/pedidos/confirmar", data={"checkout_token": token}, follow_redirects=True)
+
+    assert first.status_code == 302
+    assert Order.query.count() == 1
+    assert "ya se usó" in second.get_data(as_text=True)
+
+
+def test_mis_pedidos_vacio_muestra_mensaje(client, logged_in):
+    html = client.get("/pedidos").get_data(as_text=True)
+    assert "Aún no tienes pedidos" in html

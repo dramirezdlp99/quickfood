@@ -6,9 +6,10 @@ from typing import Any
 
 from flask import session as flask_session
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import selectinload
 
 from ..extensions import db
-from ..models import Order, OrderItem
+from ..models import Order, OrderItem, Product
 from .cart_service import MAX_PRODUCT_ID as MAX_DB_ID
 from .cart_service import CartService
 
@@ -93,7 +94,8 @@ class OrderQueries:
     def list_for_user(user_id: int) -> list[Order]:
         """Pedidos del usuario, del más reciente al más antiguo."""
         return (
-            Order.query.filter_by(user_id=user_id)
+            Order.query.options(selectinload(Order.items))
+            .filter_by(user_id=user_id)
             .order_by(Order.created_at.desc(), Order.id.desc())
             .all()
         )
@@ -103,4 +105,8 @@ class OrderQueries:
         """El pedido solo si pertenece al usuario; si no, None (la ruta responde 404)."""
         if not 1 <= order_id <= MAX_DB_ID:
             return None  # un id gigante causaría OverflowError (500) en la BD
-        return Order.query.filter_by(id=order_id, user_id=user_id).first()
+        return (
+            Order.query.options(selectinload(Order.items).selectinload(OrderItem.product).selectinload(Product.restaurant))
+            .filter_by(id=order_id, user_id=user_id)
+            .first()
+        )

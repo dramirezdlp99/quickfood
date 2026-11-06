@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Pedido #{{ order.id }} · QuickFood{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/orders.css') }}">
+<section id="orders-page" aria-labelledby="orders-title">
+  <header class="orders-header orders-header-row">
+    <div>
+      <p class="orders-eyebrow">Detalle</p>
+      <h1 id="orders-title">Pedido #{{ order.id }}</h1>
+      <p class="orders-intro">Confirmado el {{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+    </div>
+    <p class="orders-status">
+      <span class="visually-hidden">Estado:</span>
+      <span class="badge qf-status qf-status-{{ order.status }}">{{ order.status }}</span>
+    </p>
+  </header>
+
+  <div class="orders-layout">
+    <div class="orders-card">
+      <div class="orders-table-wrap">
+        <table class="orders-table">
+          <caption class="visually-hidden">Productos del pedido #{{ order.id }}</caption>
+          <thead>
+            <tr>
+              <th scope="col">Producto</th>
+              <th scope="col" class="orders-num">Cantidad</th>
+              <th scope="col" class="orders-num">Precio unitario</th>
+              <th scope="col" class="orders-num">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in order.items %}
+              <tr>
+                <th scope="row">
+                  {{ item.product.name }}
+                  <span class="orders-muted">{{ item.product.restaurant.name }}</span>
+                </th>
+                <td class="orders-num">{{ item.quantity }}</td>
+                <td class="orders-num">{{ item.unit_price|cop }}</td>
+                <td class="orders-num orders-strong">{{ item.subtotal|cop }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <aside class="orders-summary-card" aria-labelledby="orders-summary-title">
+      <h2 id="orders-summary-title">Resumen</h2>
+      <div class="orders-row">
+        <span>Productos</span>
+        <span>{{ order.items|sum(attribute='quantity') }}</span>
+      </div>
+      <div class="orders-total">
+        <span>Total</span>
+        <strong>{{ order.total|cop }}</strong>
+      </div>
+      <p class="orders-note">Los precios son los que tenía cada producto al confirmar.</p>
+      <a class="btn qf-btn orders-primary-button" href="{{ url_for('orders.index') }}">Mis pedidos</a>
+      <a class="orders-link" href="{{ url_for('restaurants.index') }}">Seguir comprando</a>
+    </aside>
+  </div>
+</section>
+{% endblock %}
