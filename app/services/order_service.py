@@ -10,8 +10,7 @@ from sqlalchemy.orm import selectinload
 
 from ..extensions import db
 from ..models import Order, OrderItem, Product
-from .cart_service import MAX_PRODUCT_ID as MAX_DB_ID
-from .cart_service import CartService
+from .cart_service import MAX_DB_ID, CartService
 
 CHECKOUT_REJECTED_MESSAGE = "La confirmación no es válida o ya se usó."
 
