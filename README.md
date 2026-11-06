@@ -80,7 +80,7 @@
 | Administración | Lista de pedidos con filtro por estado, detalle y cambio de estado (pendiente → preparando → entregado) | ✅ Integrado |
 | Carrito | Agregar, cambiar cantidades (1 a 20) y eliminar productos; totales calculados en el servidor con los precios de la base de datos | ✅ Integrado |
 | Pedidos | Confirmar el carrito con token de un solo uso y total calculado en el servidor; "Mis pedidos" y detalle con su estado | ✅ Integrado |
-| Catálogo | Listado de restaurantes, menús y búsqueda | 🚧 En desarrollo |
+| Catálogo | Listado de restaurantes, menús y búsqueda | ✅ Integrado |
 
 <table>
   <tr>
@@ -300,7 +300,7 @@ Cada producto del menú tiene un botón "Agregar" que envía el formulario a `/c
 
 | 🧪 Pruebas | 📈 Cobertura total | 📈 Código nuevo en SonarQube | 🐞 Issues nuevos | 🛡️ ZAP | 📝 Errores registrados |
 | :---: | :---: | :---: | :---: | :---: | :---: |
-| **142** (120 unitarias, 15 de integración, 7 de seguridad) | **95,80 %** | **86 %** | **0** | **0 High · 0 Medium** | **15** |
+| **209** (165 unitarias, 23 de integración, 21 de seguridad) | **97,11 %** | **86 %** | **0** | **0 High · 0 Medium** | **23** |
 
 **Limitaciones y pendientes**
 
