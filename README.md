@@ -153,7 +153,7 @@ Las dos ramas protegidas también bloquean el *force push*, impiden borrarlas, d
 
 | 🧪 Pruebas | 📈 Cobertura | 🐞 Issues en SonarQube | 🛡️ ZAP | 📝 Errores registrados |
 | :---: | :---: | :---: | :---: | :---: |
-| **107** | **95 %** | **0** | **0 High · 0 Medium** | **14** |
+| **210** | **98,74 %** | **0** | **0 High · 0 Medium** | **24** |
 
 </div>
 
