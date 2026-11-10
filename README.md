@@ -296,11 +296,11 @@ Cada producto del menú tiene un botón "Agregar" que envía el formulario a `/c
 | Se escapan `%`, `_` y `\` antes de buscar | Que buscar `%` devuelva todos los restaurantes |
 | Los id fuera del rango de un entero responden 404 | Un error 500 por desbordamiento con un id gigante |
 
-**Resultados al integrar el módulo (PR #6)**
+**Resultados con el proyecto integrado (después del PR #8)**
 
 | 🧪 Pruebas | 📈 Cobertura total | 📈 Código nuevo en SonarQube | 🐞 Issues nuevos | 🛡️ ZAP | 📝 Errores registrados |
 | :---: | :---: | :---: | :---: | :---: | :---: |
-| **210** (165 unitarias, 23 de integración, 22 de seguridad) | **97,11 %** | **86 %** | **0** | **0 High · 0 Medium** | **24** |
+| **210** (165 unitarias, 23 de integración, 22 de seguridad) | **98,74 %** | **86 %** | **0** | **0 High · 0 Medium** | **24** |
 
 **Limitaciones y pendientes**
 
