@@ -300,7 +300,7 @@ Cada producto del menú tiene un botón "Agregar" que envía el formulario a `/c
 
 | 🧪 Pruebas | 📈 Cobertura total | 📈 Código nuevo en SonarQube | 🐞 Issues nuevos | 🛡️ ZAP | 📝 Errores registrados |
 | :---: | :---: | :---: | :---: | :---: | :---: |
-| **210** (165 unitarias, 23 de integración, 22 de seguridad) | **98,74 %** | **86 %** | **0** | **0 High · 0 Medium** | **24** |
+| **210** (165 unitarias, 23 de integración, 22 de seguridad) | **98,74 %** | **95,8 %** | **0** | **0 High · 0 Medium** | **24** |
 
 **Limitaciones y pendientes**
 
