@@ -5,6 +5,14 @@
   <h1 class="display-5 fw-bold">Tu comida favorita, sin enredos</h1>
   <p class="lead mb-4">Consulta restaurantes, arma tu pedido y sigue su estado en un solo lugar.</p>
   {% if endpoint_exists('restaurants.index') %}
+    <form class="mb-3" method="get" action="{{ url_for('restaurants.index') }}" role="search">
+      <label class="visually-hidden" for="home-search-input">Buscar restaurantes</label>
+      <div class="input-group input-group-lg">
+        <input id="home-search-input" class="form-control" type="search" name="q" maxlength="60"
+               placeholder="Busca por restaurante o tipo de comida">
+        <button class="btn btn-dark" type="submit">Buscar</button>
+      </div>
+    </form>
     <a class="btn btn-light btn-lg" href="{{ url_for('restaurants.index') }}">Ver restaurantes</a>
   {% else %}
     <span class="badge text-bg-light fs-6">Catálogo en construcción</span>

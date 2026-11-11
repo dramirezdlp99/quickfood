@@ -24,6 +24,9 @@
           {% if endpoint_exists('cart.view') %}
           <li class="nav-item"><a class="nav-link" href="{{ url_for('cart.view') }}">Carrito</a></li>
           {% endif %}
+          {% if current_user and endpoint_exists('orders.index') %}
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('orders.index') }}">Mis pedidos</a></li>
+          {% endif %}
           {% if current_user and current_user.is_admin and endpoint_exists('admin.orders') %}
           <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.orders') }}">Administración</a></li>
           {% endif %}

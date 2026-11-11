@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img" aria-label="Restaurante">
+  <rect width="320" height="180" fill="#fff0e6"/>
+  <path d="M100 74h120l-10-26H110z" fill="#e8590c"/>
+  <rect x="108" y="74" width="104" height="60" fill="#fff" stroke="#1f2937" stroke-width="3"/>
+  <rect x="122" y="90" width="28" height="44" fill="#1f2937"/>
+  <rect x="166" y="90" width="32" height="24" fill="#fdba74" stroke="#1f2937" stroke-width="3"/>
+</svg>

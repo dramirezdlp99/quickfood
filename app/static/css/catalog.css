@@ -1,0 +1,41 @@
+#catalog-page {
+  --catalog-border: #f0e8e2;
+  --catalog-muted: #756f6a;
+  --catalog-shadow: 0 14px 36px rgba(31, 41, 55, .08);
+}
+
+.catalog-header { margin-bottom: 1.5rem; }
+.catalog-header h1 { margin: 0; color: var(--qf-dark); font-size: clamp(2rem, 4vw, 2.75rem); font-weight: 750; }
+.catalog-eyebrow { margin-bottom: .35rem; color: var(--qf-primary-dark); font-size: .78rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.catalog-intro { margin: .5rem 0 0; color: var(--catalog-muted); }
+.catalog-search { max-width: 34rem; margin-bottom: 1.75rem; }
+.catalog-back-link { display: inline-block; margin-bottom: 1rem; color: var(--qf-primary-dark); font-weight: 600; text-decoration: none; }
+.catalog-back-link:hover { text-decoration: underline; }
+
+.catalog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: 1.25rem; }
+.catalog-card, .menu-item, .catalog-empty { border: 1px solid var(--catalog-border); border-radius: 1.25rem; background: #fff; box-shadow: var(--catalog-shadow); }
+.catalog-card { display: flex; flex-direction: column; overflow: hidden; }
+.catalog-card-image { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; }
+.catalog-card-body { display: flex; flex: 1; flex-direction: column; align-items: flex-start; padding: 1.25rem; }
+.catalog-card-body h2 { margin: 0; color: var(--qf-dark); font-size: 1.2rem; font-weight: 700; }
+.catalog-cuisine { flex: 1; margin: .25rem 0 1rem; color: var(--catalog-muted); }
+
+.menu-list { display: grid; gap: 1rem; }
+.menu-item { display: flex; align-items: center; gap: 1.25rem; padding: 1.1rem 1.25rem; }
+.menu-item-image { flex: none; width: 6rem; height: 6rem; border-radius: .9rem; object-fit: cover; }
+.menu-item-copy { flex: 1; min-width: 0; }
+.menu-item-copy h2 { margin: 0; color: var(--qf-dark); font-size: 1.15rem; font-weight: 700; }
+.menu-item-description { margin: .25rem 0 0; color: var(--catalog-muted); font-size: .93rem; }
+.menu-item-price { margin: .45rem 0 0; color: var(--qf-primary-dark); font-size: 1.1rem; font-weight: 700; }
+.menu-item-form { display: flex; flex: none; align-items: center; gap: .5rem; margin: 0; }
+.menu-item-quantity { width: 4.75rem; }
+
+.catalog-empty { max-width: 34rem; margin: 2rem auto; padding: 2.5rem 1.5rem; color: var(--catalog-muted); text-align: center; }
+.catalog-empty p { margin: 0; font-size: 1.1rem; }
+.catalog-empty .catalog-back-link { margin: 1rem 0 0; }
+
+@media (max-width: 575.98px) {
+  .menu-item { flex-wrap: wrap; }
+  .menu-item-copy { flex-basis: calc(100% - 7.25rem); }
+  .menu-item-form { width: 100%; justify-content: flex-end; }
+}
